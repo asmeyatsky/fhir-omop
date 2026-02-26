@@ -137,6 +137,14 @@ class MockOMOPWriter:
         return len(self.written_records)
 
 
+class MockOMOPWriterFactory:
+    def __init__(self, writer: MockOMOPWriter):
+        self._writer = writer
+
+    def create_writer(self, connection_string: str) -> MockOMOPWriter:
+        return self._writer
+
+
 class TestExecutePipelineUseCase:
     async def _setup(self):
         source_repo = InMemorySourceConnectionRepository()
@@ -147,6 +155,7 @@ class TestExecutePipelineUseCase:
         whistle_engine = MockWhistleEngine()
         vocab_lookup = MockVocabularyLookup()
         omop_writer = MockOMOPWriter()
+        omop_writer_factory = MockOMOPWriterFactory(omop_writer)
 
         vocab_service = VocabularyDomainService(vocab_lookup)
         mapping_service = MappingDomainService(whistle_engine, vocab_service)
@@ -177,7 +186,7 @@ class TestExecutePipelineUseCase:
             mapping_repo=mapping_repo,
             fhir_client=fhir_client,
             mapping_service=mapping_service,
-            omop_writer=omop_writer,
+            omop_writer_factory=omop_writer_factory,
             event_bus=event_bus,
         )
 
@@ -228,7 +237,7 @@ class TestExecutePipelineUseCase:
             pipeline_repo=pipeline_repo, source_repo=source_repo,
             mapping_repo=mapping_repo, fhir_client=MockFHIRClient(),
             mapping_service=MappingDomainService(MockWhistleEngine(), VocabularyDomainService(MockVocabularyLookup())),
-            omop_writer=MockOMOPWriter(), event_bus=event_bus,
+            omop_writer_factory=MockOMOPWriterFactory(MockOMOPWriter()), event_bus=event_bus,
         )
 
         with pytest.raises(ValueError, match="not active"):

@@ -6,6 +6,7 @@ Architectural Intent:
 - Phase 1: sequential execution
 - Delegates each stage to domain services and ports
 - Tracks stage-level progress on the Pipeline aggregate
+- Creates OMOP writer dynamically from pipeline's target connection string
 
 Parallelization Notes:
 - Phase 1 is sequential (extract all → transform all → load all)
@@ -13,13 +14,14 @@ Parallelization Notes:
 """
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import UTC, datetime
 
 from src.application.dtos.pipeline_dtos import CreatePipelineDTO, PipelineResponseDTO, StageResultDTO
 from src.domain.entities.pipeline import Pipeline, PipelineStage, StageResult
 from src.domain.ports.fhir_client_port import FHIRClientPort
-from src.domain.ports.omop_writer_port import OMOPWriterPort
+from src.domain.ports.omop_writer_port import OMOPWriterFactoryPort
 from src.domain.ports.repository_ports import (
     EventBusPort,
     MappingConfigRepositoryPort,
@@ -30,6 +32,8 @@ from src.domain.services.mapping_service import MappingDomainService
 from src.domain.value_objects.fhir import FHIRBundle
 from src.domain.value_objects.omop import OMOPRecord
 
+logger = logging.getLogger(__name__)
+
 
 class ExecutePipelineUseCase:
     def __init__(
@@ -39,7 +43,7 @@ class ExecutePipelineUseCase:
         mapping_repo: MappingConfigRepositoryPort,
         fhir_client: FHIRClientPort,
         mapping_service: MappingDomainService,
-        omop_writer: OMOPWriterPort,
+        omop_writer_factory: OMOPWriterFactoryPort,
         event_bus: EventBusPort,
     ) -> None:
         self._pipeline_repo = pipeline_repo
@@ -47,7 +51,7 @@ class ExecutePipelineUseCase:
         self._mapping_repo = mapping_repo
         self._fhir_client = fhir_client
         self._mapping_service = mapping_service
-        self._omop_writer = omop_writer
+        self._omop_writer_factory = omop_writer_factory
         self._event_bus = event_bus
 
     async def execute(self, dto: CreatePipelineDTO) -> PipelineResponseDTO:
@@ -68,6 +72,9 @@ class ExecutePipelineUseCase:
                 raise ValueError(f"Mapping '{m.name}' is not active")
             mappings.append(m)
 
+        # Create writer for this pipeline's target
+        omop_writer = self._omop_writer_factory.create_writer(dto.target_connection_string)
+
         # Create and start pipeline
         pipeline = Pipeline.create(
             id=str(uuid.uuid4()),
@@ -84,10 +91,15 @@ class ExecutePipelineUseCase:
             extract_start = datetime.now(UTC)
             all_bundles: list[FHIRBundle] = []
             for mapping in mappings:
+                logger.info(
+                    "Extracting %s resources from %s",
+                    mapping.source_resource.value, source.name,
+                )
                 bundle = await self._fhir_client.extract_resources(
                     endpoint=source.endpoint,
                     resource_type=mapping.source_resource,
                 )
+                logger.info("Extracted %d %s resources", bundle.count, mapping.source_resource.value)
                 all_bundles.append(bundle)
 
             total_extracted = sum(b.count for b in all_bundles)
@@ -110,7 +122,13 @@ class ExecutePipelineUseCase:
                 try:
                     records = await self._mapping_service.transform_bundle(bundle, mapping)
                     all_records.extend(records)
+                    logger.info(
+                        "Transformed %d %s → %d %s records",
+                        bundle.count, mapping.source_resource.value,
+                        len(records), mapping.target_table.value,
+                    )
                 except Exception as e:
+                    logger.error("Transform failed for %s: %s", mapping.name, e)
                     transform_errors += 1
 
             transform_result = StageResult(
@@ -126,7 +144,9 @@ class ExecutePipelineUseCase:
 
             # === LOAD STAGE ===
             load_start = datetime.now(UTC)
-            loaded_count = await self._omop_writer.write_records(all_records)
+            logger.info("Loading %d records to OMOP target", len(all_records))
+            loaded_count = await omop_writer.write_records(all_records)
+            logger.info("Loaded %d/%d records successfully", loaded_count, len(all_records))
 
             load_result = StageResult(
                 stage=PipelineStage.LOAD,
@@ -141,6 +161,7 @@ class ExecutePipelineUseCase:
             await self._pipeline_repo.save(pipeline)
 
         except Exception as e:
+            logger.error("Pipeline failed: %s", e, exc_info=True)
             stage = pipeline.current_stage or PipelineStage.EXTRACT
             pipeline = pipeline.fail(stage, str(e))
             await self._pipeline_repo.save(pipeline)

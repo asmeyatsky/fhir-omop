@@ -47,10 +47,10 @@ class WhistleEngine:
             params = rule.get("params", {})
 
             value = self._extract_value(input_resource, source_path)
-            if value is None and not rule.get("allow_null", False):
+            if value is None:
                 if rule.get("default") is not None:
                     value = rule["default"]
-                else:
+                elif not rule.get("allow_null", False):
                     continue
 
             transformed = self._apply_transform(value, transform, params)
@@ -115,13 +115,15 @@ class WhistleEngine:
             if isinstance(value, str) and len(value) >= 10:
                 return int(value[8:10])
         elif transform == "vocabulary_lookup":
-            # Phase 1: pass through source code, vocabulary resolver handles in pipeline
-            return value
+            # Phase 1: no live Athena lookup — return 0 (unmapped concept)
+            # The source_value field carries the raw code for traceability
+            return 0
         elif transform == "constant":
             return params.get("value")
         elif transform == "map":
             mapping = params.get("mapping", {})
-            return mapping.get(str(value), params.get("default"))
+            result = mapping.get(str(value), params.get("default"))
+            return result if result is not None else 0
         elif transform == "first_of_array":
             if isinstance(value, list) and value:
                 return value[0]
@@ -129,4 +131,15 @@ class WhistleEngine:
             if isinstance(value, list):
                 sep = params.get("separator", " ")
                 return sep.join(str(v) for v in value)
+        elif transform == "person_id_hash":
+            # Generate a stable integer ID from a FHIR resource id string
+            if isinstance(value, str):
+                return abs(hash(value)) % (2**31)
+            return 0
+        elif transform == "reference_to_person_id":
+            # Extract patient ID from FHIR reference like "Patient/123" and hash it
+            if isinstance(value, str):
+                ref_id = value.split("/")[-1] if "/" in value else value
+                return abs(hash(ref_id)) % (2**31)
+            return 0
         return value

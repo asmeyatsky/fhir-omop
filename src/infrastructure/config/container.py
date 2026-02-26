@@ -8,7 +8,6 @@ Architectural Intent:
 """
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass, field
 
 from src.application.commands.create_mapping import CreateMappingFromTemplateUseCase
@@ -26,7 +25,7 @@ from src.domain.services.mapping_service import MappingDomainService
 from src.domain.services.vocabulary_service import VocabularyDomainService
 from src.domain.value_objects.mapping import MappingTemplate
 from src.infrastructure.adapters.fhir.hapi_fhir_client import HAPIFHIRClient
-from src.infrastructure.adapters.omop.postgresql_writer import PostgreSQLOMOPWriter
+from src.infrastructure.adapters.omop.writer_factory import PostgreSQLOMOPWriterFactory
 from src.infrastructure.adapters.vocabulary.athena_vocabulary_service import AthenaVocabularyService
 from src.infrastructure.adapters.whistle.whistle_engine import WhistleEngine
 from src.infrastructure.repositories.in_memory import (
@@ -35,6 +34,16 @@ from src.infrastructure.repositories.in_memory import (
     InMemoryPipelineRepository,
     InMemorySourceConnectionRepository,
 )
+
+
+class NoOpVocabularyLookup:
+    """Stub vocabulary lookup for Phase 1 — returns None (unmapped) for all codes."""
+
+    async def find_standard_concept(self, source_code: str, source_vocabulary_id: str):
+        return None
+
+    async def search_concepts(self, query: str, vocabulary_id=None, domain_id=None, limit=20):
+        return []
 
 
 @dataclass
@@ -56,21 +65,12 @@ class AppContainer:
     # Infrastructure adapters
     fhir_client: HAPIFHIRClient = field(default_factory=HAPIFHIRClient)
     whistle_engine: WhistleEngine = field(default_factory=WhistleEngine)
+    omop_writer_factory: PostgreSQLOMOPWriterFactory = field(
+        default_factory=PostgreSQLOMOPWriterFactory
+    )
 
     # Templates (populated during init)
     templates: dict[str, MappingTemplate] = field(default_factory=dict)
-
-    def _get_omop_connection_string(self) -> str:
-        return os.environ.get(
-            "OMOP_DATABASE_URL",
-            "postgresql://localhost:5432/omop",
-        )
-
-    def _get_vocab_connection_string(self) -> str:
-        return os.environ.get(
-            "VOCAB_DATABASE_URL",
-            "postgresql://localhost:5432/omop",
-        )
 
     # --- Use Cases ---
 
@@ -94,20 +94,18 @@ class AppContainer:
         )
 
     def execute_pipeline_use_case(self) -> ExecutePipelineUseCase:
-        vocab_service = AthenaVocabularyService(self._get_vocab_connection_string())
-        vocabulary_domain_service = VocabularyDomainService(vocab_service)
+        vocabulary_domain_service = VocabularyDomainService(NoOpVocabularyLookup())
         mapping_service = MappingDomainService(
             whistle_engine=self.whistle_engine,
             vocabulary_service=vocabulary_domain_service,
         )
-        omop_writer = PostgreSQLOMOPWriter(self._get_omop_connection_string())
         return ExecutePipelineUseCase(
             pipeline_repo=self.pipeline_repo,
             source_repo=self.source_repo,
             mapping_repo=self.mapping_repo,
             fhir_client=self.fhir_client,
             mapping_service=mapping_service,
-            omop_writer=omop_writer,
+            omop_writer_factory=self.omop_writer_factory,
             event_bus=self.event_bus,
         )
 

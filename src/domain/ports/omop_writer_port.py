@@ -31,3 +31,10 @@ class OMOPWriterPort(Protocol):
     async def get_record_count(self, table: OMOPTable) -> int:
         """Get the current record count for a given OMOP table."""
         ...
+
+
+class OMOPWriterFactoryPort(Protocol):
+    """Factory port for creating OMOP writers from connection strings."""
+
+    def create_writer(self, connection_string: str) -> OMOPWriterPort:
+        ...

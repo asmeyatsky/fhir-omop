@@ -72,10 +72,15 @@ def build_patient_to_person_template() -> MappingTemplate:
     )
 
     whistle_rules = [
-        {"source": "identifier[0].value", "target": "person_source_value", "transform": "direct"},
-        {"source": "birthDate", "target": "year_of_birth", "transform": "year_from_date"},
-        {"source": "birthDate", "target": "month_of_birth", "transform": "month_from_date"},
-        {"source": "birthDate", "target": "day_of_birth", "transform": "day_from_date"},
+        {"source": "id", "target": "person_id", "transform": "person_id_hash"},
+        {"source": "identifier[0].value", "target": "person_source_value", "transform": "direct",
+         "default": "unknown", "allow_null": True},
+        {"source": "birthDate", "target": "year_of_birth", "transform": "year_from_date",
+         "default": 1900, "allow_null": True},
+        {"source": "birthDate", "target": "month_of_birth", "transform": "month_from_date",
+         "default": 1, "allow_null": True},
+        {"source": "birthDate", "target": "day_of_birth", "transform": "day_from_date",
+         "default": 1, "allow_null": True},
         {
             "source": "gender",
             "target": "gender_concept_id",
@@ -84,8 +89,11 @@ def build_patient_to_person_template() -> MappingTemplate:
                 "mapping": {"male": 8507, "female": 8532, "other": 8521, "unknown": 8551},
                 "default": 8551,
             },
+            "default": 8551,
+            "allow_null": True,
         },
-        {"source": "gender", "target": "gender_source_value", "transform": "direct"},
+        {"source": "gender", "target": "gender_source_value", "transform": "direct",
+         "default": "unknown", "allow_null": True},
         {
             "source": None,
             "target": "race_concept_id",
@@ -144,9 +152,13 @@ def build_encounter_to_visit_template() -> MappingTemplate:
     )
 
     whistle_rules = [
+        {"source": "subject.reference", "target": "person_id", "transform": "reference_to_person_id",
+         "default": 0, "allow_null": True},
         {"source": "id", "target": "visit_source_value", "transform": "direct"},
-        {"source": "period.start", "target": "visit_start_date", "transform": "direct"},
-        {"source": "period.end", "target": "visit_end_date", "transform": "direct"},
+        {"source": "period.start", "target": "visit_start_date", "transform": "direct",
+         "default": "1970-01-01", "allow_null": True},
+        {"source": "period.end", "target": "visit_end_date", "transform": "direct",
+         "default": "1970-01-01", "allow_null": True},
         {
             "source": "class.code",
             "target": "visit_concept_id",
@@ -159,8 +171,10 @@ def build_encounter_to_visit_template() -> MappingTemplate:
                     "SS": 9202,     # Short Stay → Outpatient
                     "HH": 581476,   # Home Health
                 },
-                "default": 0,
+                "default": 9202,
             },
+            "default": 9202,
+            "allow_null": True,
         },
         {
             "source": None,
@@ -207,14 +221,20 @@ def build_condition_to_condition_occurrence_template() -> MappingTemplate:
     )
 
     whistle_rules = [
-        {"source": "code.coding[0].code", "target": "condition_source_value", "transform": "direct"},
+        {"source": "subject.reference", "target": "person_id", "transform": "reference_to_person_id",
+         "default": 0, "allow_null": True},
+        {"source": "code.coding[0].code", "target": "condition_source_value", "transform": "direct",
+         "default": "unknown", "allow_null": True},
         {
             "source": "code.coding[0].code",
             "target": "condition_concept_id",
             "transform": "vocabulary_lookup",
             "params": {"vocabulary": "SNOMED"},
+            "default": 0,
+            "allow_null": True,
         },
-        {"source": "onsetDateTime", "target": "condition_start_date", "transform": "direct"},
+        {"source": "onsetDateTime", "target": "condition_start_date", "transform": "direct",
+         "default": "1970-01-01", "allow_null": True},
         {
             "source": None,
             "target": "condition_type_concept_id",
@@ -265,16 +285,24 @@ def build_observation_to_measurement_template() -> MappingTemplate:
     )
 
     whistle_rules = [
-        {"source": "code.coding[0].code", "target": "measurement_source_value", "transform": "direct"},
+        {"source": "subject.reference", "target": "person_id", "transform": "reference_to_person_id",
+         "default": 0, "allow_null": True},
+        {"source": "code.coding[0].code", "target": "measurement_source_value", "transform": "direct",
+         "default": "unknown", "allow_null": True},
         {
             "source": "code.coding[0].code",
             "target": "measurement_concept_id",
             "transform": "vocabulary_lookup",
             "params": {"vocabulary": "LOINC"},
+            "default": 0,
+            "allow_null": True,
         },
-        {"source": "effectiveDateTime", "target": "measurement_date", "transform": "direct"},
-        {"source": "valueQuantity.value", "target": "value_as_number", "transform": "direct"},
-        {"source": "valueQuantity.unit", "target": "unit_source_value", "transform": "direct"},
+        {"source": "effectiveDateTime", "target": "measurement_date", "transform": "direct",
+         "default": "1970-01-01", "allow_null": True},
+        {"source": "valueQuantity.value", "target": "value_as_number", "transform": "direct",
+         "default": 0, "allow_null": True},
+        {"source": "valueQuantity.unit", "target": "unit_source_value", "transform": "direct",
+         "default": "", "allow_null": True},
         {
             "source": None,
             "target": "measurement_type_concept_id",

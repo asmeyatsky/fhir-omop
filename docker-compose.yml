@@ -1,0 +1,40 @@
+services:
+  # PostgreSQL with OMOP CDM v5.4 schema
+  omop-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: omop
+      POSTGRES_USER: omop
+      POSTGRES_PASSWORD: omop
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d
+      - omop-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U omop"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fhir-omop
+
+  # FHIR-to-OMOP Accelerator API
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      OMOP_DATABASE_URL: postgresql://omop:omop@omop-db:5432/omop
+    depends_on:
+      omop-db:
+        condition: service_healthy
+    networks:
+      - fhir-omop
+
+networks:
+  fhir-omop:
+    driver: bridge
+
+volumes:
+  omop-data:
