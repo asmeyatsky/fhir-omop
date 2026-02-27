@@ -40,17 +40,12 @@ function updateSidebar() {
   if (email) email.textContent = user.email;
   if (badge) badge.innerHTML = roleBadge(user.role);
 
-  // Role-based nav visibility
   document.querySelectorAll('.admin-only').forEach(el => {
-    el.classList.toggle('hidden', !hasRole('admin'));
+    el.classList.toggle('d-none', !hasRole('admin'));
   });
   document.querySelectorAll('.audit-visible').forEach(el => {
-    el.classList.toggle('hidden', !hasRole('admin', 'auditor'));
+    el.classList.toggle('d-none', !hasRole('admin', 'auditor'));
   });
-  const adminLabel = document.getElementById('admin-section-label');
-  if (adminLabel) {
-    adminLabel.classList.toggle('hidden', !hasRole('admin', 'auditor'));
-  }
 }
 
 // Logout handler

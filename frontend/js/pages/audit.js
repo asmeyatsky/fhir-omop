@@ -1,5 +1,5 @@
 /**
- * Audit log page (ADMIN/AUDITOR only).
+ * Audit Log (ADMIN/AUDITOR) — Bootstrap 5.
  */
 import { api } from '../core/api.js';
 import { formatDateTime, toast, statusBadge, escapeHtml } from '../core/utils.js';
@@ -8,37 +8,34 @@ export async function renderAudit(root) {
   let filters = { event_type: '', actor_id: '', limit: 50, offset: 0 };
 
   root.innerHTML = `
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">Audit Log</h1>
-        <p class="page-subtitle">System activity and compliance trail</p>
-      </div>
+    <div class="app-page-header">
+      <h1 class="app-page-title">Audit Log</h1>
+      <p class="app-page-subtitle mb-0">System activity and compliance trail</p>
     </div>
-
-    <!-- Filters -->
-    <div class="card mb-6">
+    <div class="card app-card mb-4">
       <div class="card-body">
-        <div class="flex flex-wrap gap-4 items-end">
-          <div class="flex-1 min-w-[200px]">
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-md-4">
             <label class="form-label">Event Type</label>
-            <input type="text" id="filter-event" class="form-input" placeholder="e.g., auth.login, pipeline.execute">
+            <input type="text" id="filter-event" class="form-control" placeholder="e.g. auth.login">
           </div>
-          <div class="flex-1 min-w-[200px]">
+          <div class="col-12 col-md-4">
             <label class="form-label">Actor ID</label>
-            <input type="text" id="filter-actor" class="form-input" placeholder="User ID">
+            <input type="text" id="filter-actor" class="form-control" placeholder="User ID">
           </div>
-          <button id="apply-filters" class="btn btn-primary btn-sm">Apply Filters</button>
-          <button id="clear-filters" class="btn btn-secondary btn-sm">Clear</button>
+          <div class="col-12 col-md-4 d-flex gap-2">
+            <button type="button" id="apply-filters" class="btn btn-primary">Apply</button>
+            <button type="button" id="clear-filters" class="btn btn-outline-secondary">Clear</button>
+          </div>
         </div>
       </div>
     </div>
-
-    <div class="card">
-      <div class="card-header">
-        <span class="text-sm text-ink-500" id="audit-count"></span>
-        <div class="flex gap-2">
-          <button id="prev-page" class="btn btn-ghost btn-sm" disabled>&larr; Previous</button>
-          <button id="next-page" class="btn btn-ghost btn-sm">Next &rarr;</button>
+    <div class="card app-card">
+      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span class="small text-secondary" id="audit-count"></span>
+        <div class="d-flex gap-2">
+          <button type="button" id="prev-page" class="btn btn-sm btn-outline-secondary" disabled>Previous</button>
+          <button type="button" id="next-page" class="btn btn-sm btn-outline-secondary">Next</button>
         </div>
       </div>
       <div class="card-body p-0" id="audit-table"></div>
@@ -57,41 +54,36 @@ export async function renderAudit(root) {
 
       const el = document.getElementById('audit-table');
       if (!entries.length) {
-        el.innerHTML = '<div class="empty-state py-8"><p class="text-ink-500 text-sm">No audit entries found</p></div>';
+        el.innerHTML = '<div class="p-5 text-center text-secondary small">No audit entries found</div>';
         return;
       }
-
       el.innerHTML = `
-        <table class="data-table">
-          <thead>
-            <tr><th>Timestamp</th><th>Event</th><th>Action</th><th>Actor</th><th>Resource</th><th>Status</th><th>Integrity</th></tr>
-          </thead>
-          <tbody>
-            ${entries.map(e => `
-              <tr>
-                <td class="text-xs text-ink-500 whitespace-nowrap">${formatDateTime(e.timestamp)}</td>
-                <td><span class="badge badge-info">${escapeHtml(e.event_type)}</span></td>
-                <td class="text-ink-800 text-xs">${escapeHtml(e.action)}</td>
-                <td class="text-xs text-ink-500">${e.actor_email || e.actor_id || '—'}</td>
-                <td class="text-xs font-mono text-ink-500">${e.resource_type ? `${e.resource_type}/${(e.resource_id || '').substring(0, 8)}` : '—'}</td>
-                <td>${e.http_status ? statusBadge(e.http_status < 400 ? 'completed' : 'error') : '—'}</td>
-                <td>
-                  <button class="btn btn-ghost btn-sm verify-btn" data-id="${e.id}" title="Verify integrity">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                  </button>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="table app-table mb-0">
+            <thead>
+              <tr><th>Timestamp</th><th>Event</th><th>Action</th><th>Actor</th><th>Resource</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+              ${entries.map(e => `
+                <tr>
+                  <td class="small text-secondary">${formatDateTime(e.timestamp)}</td>
+                  <td><span class="badge badge-app-info">${escapeHtml(e.event_type)}</span></td>
+                  <td class="small">${escapeHtml(e.action)}</td>
+                  <td class="small text-secondary">${escapeHtml(e.actor_email || e.actor_id || '—')}</td>
+                  <td class="small font-monospace">${e.resource_type ? `${e.resource_type}/${(e.resource_id || '').substring(0, 8)}` : '—'}</td>
+                  <td>${e.http_status ? statusBadge(e.http_status < 400 ? 'completed' : 'error') : '—'}</td>
+                  <td><button type="button" class="btn btn-sm btn-outline-primary verify-btn" data-id="${escapeHtml(e.id)}" title="Verify"><i class="bi bi-shield-check"></i></button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
       `;
-
-      // Verify buttons
       el.querySelectorAll('.verify-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
           try {
             const res = await api.get(`/api/v1/audit/${btn.dataset.id}/verify`);
-            toast(res.valid ? 'Integrity verified' : 'Integrity check FAILED', res.valid ? 'success' : 'error');
+            toast(res.valid ? 'Integrity verified' : 'Verification failed', res.valid ? 'success' : 'error');
           } catch (err) {
             toast(err.message, 'error');
           }
@@ -102,26 +94,24 @@ export async function renderAudit(root) {
     }
   }
 
-  // Filter handlers
   document.getElementById('apply-filters').addEventListener('click', () => {
-    filters.event_type = document.getElementById('filter-event').value;
-    filters.actor_id = document.getElementById('filter-actor').value;
+    filters.event_type = document.getElementById('filter-event').value.trim();
+    filters.actor_id = document.getElementById('filter-actor').value.trim();
     filters.offset = 0;
     loadAudit();
   });
-
   document.getElementById('clear-filters').addEventListener('click', () => {
     document.getElementById('filter-event').value = '';
     document.getElementById('filter-actor').value = '';
-    filters = { event_type: '', actor_id: '', limit: 50, offset: 0 };
+    filters.event_type = '';
+    filters.actor_id = '';
+    filters.offset = 0;
     loadAudit();
   });
-
   document.getElementById('prev-page').addEventListener('click', () => {
     filters.offset = Math.max(0, filters.offset - filters.limit);
     loadAudit();
   });
-
   document.getElementById('next-page').addEventListener('click', () => {
     filters.offset += filters.limit;
     loadAudit();

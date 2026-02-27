@@ -55,17 +55,17 @@ export async function handleRoute() {
   const pageContent = document.getElementById('page-content');
 
   if (isLogin) {
-    loginRoot.classList.remove('hidden');
-    appShell.classList.add('hidden');
+    loginRoot.classList.remove('d-none');
+    appShell.classList.add('d-none');
     currentCleanup = await route.render(loginRoot);
   } else {
-    loginRoot.classList.add('hidden');
-    appShell.classList.remove('hidden');
+    loginRoot.classList.add('d-none');
+    appShell.classList.remove('d-none');
+    appShell.classList.add('d-flex');
     currentCleanup = await route.render(pageContent);
   }
 
-  // Update active nav
-  document.querySelectorAll('.nav-link').forEach(link => {
+  document.querySelectorAll('.nav-link-app[href], .dropdown-item[href]').forEach(link => {
     link.classList.toggle('active', link.getAttribute('href') === path);
   });
 }

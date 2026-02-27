@@ -1,5 +1,5 @@
 /**
- * Dashboard page with KPI cards, recent activity, and system health.
+ * Dashboard — KPI cards, recent pipelines, sources. Bootstrap 5 layout.
  */
 import { api } from '../core/api.js';
 import { currentUser } from '../core/auth.js';
@@ -8,43 +8,40 @@ import { formatNumber, statusBadge, timeAgo, loadingCards, toast } from '../core
 export async function renderDashboard(root) {
   const user = currentUser();
   root.innerHTML = `
-    <div class="page-header">
+    <div class="app-page-header d-flex flex-wrap justify-content-between align-items-start gap-3">
       <div>
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">Welcome back, ${user?.email || 'User'}</p>
+        <h1 class="app-page-title">Dashboard</h1>
+        <p class="app-page-subtitle mb-0">Welcome back, ${escapeHtml(user?.email || 'User')}</p>
       </div>
-      <div class="flex items-center gap-2">
-        <span id="health-indicator" class="badge badge-neutral">checking...</span>
-      </div>
+      <span id="health-indicator" class="badge badge-app-neutral">Checking…</span>
     </div>
 
-    <!-- KPI Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" id="kpi-grid">
+    <div class="row g-4 mb-4" id="kpi-grid">
       ${loadingCards(4)}
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Recent Pipelines -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="text-sm font-semibold text-ink-900">Recent Pipelines</h3>
-          <a href="#/pipelines" class="text-xs text-brand hover:text-brand-900">View all</a>
+    <div class="row g-4">
+      <div class="col-12 col-xl-6">
+        <div class="card app-card h-100">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Recent Pipelines</span>
+            <a href="#/pipelines" class="btn btn-sm btn-link link-primary text-decoration-none p-0">View all</a>
+          </div>
+          <div class="card-body p-0" id="recent-pipelines"></div>
         </div>
-        <div class="card-body p-0" id="recent-pipelines"></div>
       </div>
-
-      <!-- Recent Sources -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="text-sm font-semibold text-ink-900">FHIR Source Connections</h3>
-          <a href="#/sources" class="text-xs text-brand hover:text-brand-900">View all</a>
+      <div class="col-12 col-xl-6">
+        <div class="card app-card h-100">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>FHIR Source Connections</span>
+            <a href="#/sources" class="btn btn-sm btn-link link-primary text-decoration-none p-0">View all</a>
+          </div>
+          <div class="card-body p-0" id="recent-sources"></div>
         </div>
-        <div class="card-body p-0" id="recent-sources"></div>
       </div>
     </div>
   `;
 
-  // Load data in parallel
   const [healthRes, sourcesRes, pipelinesRes] = await Promise.allSettled([
     fetch('/health').then(r => r.json()),
     api.get('/api/v1/sources').catch(() => []),
@@ -55,90 +52,86 @@ export async function renderDashboard(root) {
   const sources = sourcesRes.status === 'fulfilled' ? sourcesRes.value : [];
   const pipelines = pipelinesRes.status === 'fulfilled' ? pipelinesRes.value : [];
 
-  // Health indicator
   const hi = document.getElementById('health-indicator');
-  if (health?.status === 'healthy') {
-    hi.className = 'badge badge-success';
-    hi.textContent = 'System Healthy';
-  } else {
-    hi.className = 'badge badge-error';
-    hi.textContent = 'System Degraded';
-  }
+  hi.className = health?.status === 'healthy' ? 'badge badge-app-success' : 'badge badge-app-danger';
+  hi.textContent = health?.status === 'healthy' ? 'System healthy' : 'System degraded';
 
-  // KPI cards
   const completedPipelines = pipelines.filter(p => p.status === 'completed').length;
   const totalRecords = pipelines.reduce((sum, p) => sum + (p.total_records || 0), 0);
-  const totalErrors = pipelines.reduce((sum, p) => sum + (p.total_errors || 0), 0);
 
   document.getElementById('kpi-grid').innerHTML = `
-    <div class="kpi-card">
-      <div class="kpi-icon bg-brand-100">
-        <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/></svg>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="app-stat-card h-100">
+        <div class="app-stat-icon bg-primary bg-opacity-10 text-primary mb-2"><i class="bi bi-link-45deg"></i></div>
+        <div class="app-stat-value">${formatNumber(sources.length)}</div>
+        <div class="app-stat-label">FHIR Sources</div>
       </div>
-      <div class="kpi-value">${formatNumber(sources.length)}</div>
-      <div class="kpi-label">FHIR Sources</div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-icon bg-brand-100">
-        <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="app-stat-card h-100">
+        <div class="app-stat-icon bg-primary bg-opacity-10 text-primary mb-2"><i class="bi bi-lightning"></i></div>
+        <div class="app-stat-value">${formatNumber(pipelines.length)}</div>
+        <div class="app-stat-label">Total Pipelines</div>
       </div>
-      <div class="kpi-value">${formatNumber(pipelines.length)}</div>
-      <div class="kpi-label">Total Pipelines</div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-icon bg-brand-100">
-        <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="app-stat-card h-100">
+        <div class="app-stat-icon bg-success bg-opacity-10 text-success mb-2"><i class="bi bi-check-circle"></i></div>
+        <div class="app-stat-value">${formatNumber(completedPipelines)}</div>
+        <div class="app-stat-label">Completed Runs</div>
       </div>
-      <div class="kpi-value">${formatNumber(completedPipelines)}</div>
-      <div class="kpi-label">Completed Runs</div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-icon bg-brand-200">
-        <svg class="w-5 h-5 text-brand-800" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="app-stat-card h-100">
+        <div class="app-stat-icon bg-primary bg-opacity-10 text-primary mb-2"><i class="bi bi-database"></i></div>
+        <div class="app-stat-value">${formatNumber(totalRecords)}</div>
+        <div class="app-stat-label">Records Transformed</div>
       </div>
-      <div class="kpi-value">${formatNumber(totalRecords)}</div>
-      <div class="kpi-label">Records Transformed</div>
     </div>
   `;
 
-  // Recent pipelines table
   const pipelinesEl = document.getElementById('recent-pipelines');
   if (pipelines.length === 0) {
-    pipelinesEl.innerHTML = '<div class="empty-state py-8"><p class="text-ink-500 text-sm">No pipelines yet</p></div>';
+    pipelinesEl.innerHTML = '<div class="p-4 text-center text-secondary small">No pipelines yet. <a href="#/pipelines" class="link-primary">Create one</a>.</div>';
   } else {
     const rows = pipelines.slice(0, 5).map(p => `
-      <tr class="cursor-pointer" onclick="window.location.hash='#/pipelines'">
-        <td class="font-medium text-ink-800">${p.name}</td>
+      <tr class="align-middle">
+        <td><a href="#/pipelines" class="text-decoration-none text-dark fw-medium">${escapeHtml(p.name)}</a></td>
         <td>${statusBadge(p.status)}</td>
-        <td class="text-ink-500">${formatNumber(p.total_records)}</td>
-        <td class="text-ink-500">${timeAgo(p.created_at)}</td>
+        <td class="text-secondary">${formatNumber(p.total_records)}</td>
+        <td class="text-secondary small">${timeAgo(p.created_at)}</td>
       </tr>
     `).join('');
     pipelinesEl.innerHTML = `
-      <table class="data-table">
+      <table class="table app-table mb-0">
         <thead><tr><th>Name</th><th>Status</th><th>Records</th><th>Created</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     `;
   }
 
-  // Recent sources table
   const sourcesEl = document.getElementById('recent-sources');
   if (sources.length === 0) {
-    sourcesEl.innerHTML = '<div class="empty-state py-8"><p class="text-ink-500 text-sm">No sources configured</p></div>';
+    sourcesEl.innerHTML = '<div class="p-4 text-center text-secondary small">No sources configured. <a href="#/sources" class="link-primary">Add a source</a>.</div>';
   } else {
     const rows = sources.slice(0, 5).map(s => `
-      <tr class="cursor-pointer" onclick="window.location.hash='#/sources'">
-        <td class="font-medium text-ink-800">${s.name}</td>
+      <tr class="align-middle">
+        <td><a href="#/sources" class="text-decoration-none text-dark fw-medium">${escapeHtml(s.name)}</a></td>
         <td>${statusBadge(s.status)}</td>
-        <td class="text-ink-500 text-xs font-mono truncate max-w-[200px]">${s.base_url}</td>
+        <td class="text-secondary small text-truncate" style="max-width: 200px;">${escapeHtml(s.base_url)}</td>
       </tr>
     `).join('');
     sourcesEl.innerHTML = `
-      <table class="data-table">
+      <table class="table app-table mb-0">
         <thead><tr><th>Name</th><th>Status</th><th>URL</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     `;
   }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
 }

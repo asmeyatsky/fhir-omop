@@ -21,8 +21,10 @@ async function request(method, path, body = null, query = null) {
   if (body && method !== 'GET') opts.body = JSON.stringify(body);
 
   const res = await fetch(url.toString(), opts);
+  const urlStr = url.toString();
+  const isLogin = urlStr.includes('/auth/login');
 
-  if (res.status === 401) {
+  if (res.status === 401 && !isLogin) {
     clearTokens();
     window.location.hash = '#/login';
     throw new Error('Session expired');
@@ -30,7 +32,8 @@ async function request(method, path, body = null, query = null) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || `HTTP ${res.status}`);
+    const msg = Array.isArray(err.detail) ? (err.detail[0]?.msg || err.detail[0]?.loc?.join(' ') || String(err.detail)) : (err.detail || `HTTP ${res.status}`);
+    throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
   }
 
   if (res.status === 204) return null;

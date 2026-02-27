@@ -18,7 +18,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from src.domain.entities.tenant import Tenant
@@ -130,7 +130,28 @@ def create_app() -> FastAPI:
 
     @app.get("/health", response_model=HealthResponse, tags=["Health"])
     async def health_check():
-        return HealthResponse(version="0.2.0")
+        return HealthResponse(status="healthy", version="0.2.0", service="fhir-omop-accelerator")
+
+    # Avoid 404 when the browser requests /favicon.ico
+    @app.get("/favicon.ico", include_in_schema=False)
+    async def favicon():
+        frontend_dir = Path(__file__).resolve().parent.parent.parent.parent / "frontend"
+        ico = frontend_dir / "favicon.ico"
+        if ico.is_file():
+            return FileResponse(ico, media_type="image/x-icon")
+        return Response(status_code=204)
+
+    @app.get("/api/v1", include_in_schema=False)
+    async def api_root():
+        """API entry point — confirms this is the FHIR-OMOP app and lists key URLs."""
+        return {
+            "service": "FHIR-to-OMOP Data Accelerator",
+            "version": "0.2.0",
+            "docs": "/docs",
+            "openapi": "/openapi.json",
+            "health": "/health",
+            "login": "POST /api/v1/auth/login",
+        }
 
     # Serve frontend static files
     frontend_dir = Path(__file__).resolve().parent.parent.parent.parent / "frontend"
