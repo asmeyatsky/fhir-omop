@@ -1,124 +1,221 @@
 # FHIR-to-OMOP Data Accelerator
 
-Transforms FHIR R4 clinical data into OMOP CDM v5.4 datasets. Extracts from any FHIR R4 server, maps via a Whistle-compatible engine, and loads into PostgreSQL.
+Enterprise platform for transforming FHIR R4 clinical data into OMOP CDM v5.4 datasets. Built for Saudi healthcare compliance (NCA ECC-2:2024, PDPL, NPHIES).
 
-## Architecture
+Extracts from any FHIR R4 server, maps via a Whistle-compatible DSL engine, and loads into PostgreSQL — with a full-featured web dashboard, JWT authentication, RBAC, audit logging, and multi-tenant isolation.
 
-Clean Architecture (hexagonal) with four layers:
+## Screenshots
 
-```
-Presentation (FastAPI)  →  Application (Use Cases)  →  Domain (Entities, Ports)
-                                                          ↑
-                                                    Infrastructure (Adapters)
-```
+The frontend is a single-page application with a navy/teal enterprise design:
 
-**Phase 1 scope:** Patient, Encounter, Condition, Observation resources mapped to OMOP person, visit_occurrence, condition_occurrence, measurement tables.
+- **Login** — JWT-based authentication with role assignment
+- **Dashboard** — KPI cards, system health, recent pipelines and sources
+- **Sources** — FHIR R4 server connections with connectivity testing
+- **Mappings** — Pre-built template browser and configuration management
+- **Pipelines** — Create, execute, and monitor ETL pipelines with stage progress
+- **Consent** — PDPL-compliant patient consent grant and revoke
+- **Users / Audit / Tenants** — Admin pages for user management, audit trail, and hospital tenants
 
 ## Quick Start
 
-```bash
-# Start PostgreSQL (OMOP schema) + API
-docker compose up -d --build
+### Option A: In-Memory (No Database Required)
 
-# Run the end-to-end demo against HAPI FHIR public server
-pip install httpx
-python scripts/demo.py
+```bash
+pip install -e ".[dev]"
+STORAGE_BACKEND=memory uvicorn src.presentation.api.app:app --port 8000
 ```
 
-The demo extracts ~6700 resources from [HAPI FHIR R4](https://hapi.fhir.org/baseR4), transforms them, and loads all records into PostgreSQL. Takes about 30 seconds.
+Open **http://localhost:8000** — the frontend login page loads immediately.
+
+### Option B: Docker Compose (Full Stack)
+
+```bash
+docker compose up -d --build
+# PostgreSQL (OMOP schema) on port 5433
+# API + Frontend on port 8000
+```
+
+Open **http://localhost:8000** or Swagger UI at **http://localhost:8000/docs**.
+
+## Architecture
+
+Clean Architecture (hexagonal) with four layers and strict dependency inversion:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Frontend (Static SPA)                                       │
+│  Tailwind CSS · Vanilla JS · Hash Router · JWT Auth          │
+├──────────────────────────────────────────────────────────────┤
+│  Presentation (FastAPI)                                      │
+│  8 routers · Pydantic schemas · Auth dependencies            │
+├──────────────────────────────────────────────────────────────┤
+│  Application (Use Cases)                                     │
+│  Commands (create, execute, authenticate)                    │
+│  Queries (list, get)                                         │
+├──────────────────────────────────────────────────────────────┤
+│  Domain (Pure Business Logic)                                │
+│  Entities · Value Objects · Services · Ports · Events        │
+├──────────────────────────────────────────────────────────────┤
+│  Infrastructure (Adapters)                                   │
+│  FHIR Client · Whistle Engine · OMOP Writer · PostgreSQL     │
+│  JWT · bcrypt · AES-256-GCM · Middleware                     │
+└──────────────────────────────────────────────────────────────┘
+```
+
+> For comprehensive documentation see [ARCHITECTURE.md](ARCHITECTURE.md) — covers database schema, all API endpoints, auth/RBAC matrix, data flow diagrams, mapping templates, compliance details, and a step-by-step demo runbook.
 
 ## API
 
-Base URL: `http://localhost:8000/api/v1` | Swagger UI: `http://localhost:8000/docs`
+Base URL: `http://localhost:8000/api/v1` | Swagger: `http://localhost:8000/docs`
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Health check |
-| POST | `/api/v1/sources` | Create FHIR source connection |
-| GET | `/api/v1/sources` | List source connections |
-| POST | `/api/v1/sources/{id}/test` | Test FHIR connectivity |
-| GET | `/api/v1/mappings/templates` | List pre-built mapping templates |
-| POST | `/api/v1/mappings` | Create mapping from template |
-| GET | `/api/v1/mappings` | List mapping configurations |
-| POST | `/api/v1/pipelines` | Execute FHIR-to-OMOP pipeline |
-| GET | `/api/v1/pipelines` | List pipelines |
-| GET | `/api/v1/pipelines/{id}` | Get pipeline status |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/health` | — | Health check |
+| POST | `/api/v1/auth/login` | — | Authenticate, receive JWT tokens |
+| GET | `/api/v1/auth/me` | Bearer | Current user info |
+| POST | `/api/v1/sources` | — | Create FHIR source connection |
+| GET | `/api/v1/sources` | — | List source connections |
+| POST | `/api/v1/sources/{id}/test` | — | Test FHIR connectivity |
+| GET | `/api/v1/mappings/templates` | — | List pre-built mapping templates |
+| POST | `/api/v1/mappings` | — | Create mapping from template |
+| GET | `/api/v1/mappings` | — | List mapping configurations |
+| POST | `/api/v1/pipelines` | — | Execute FHIR-to-OMOP pipeline |
+| GET | `/api/v1/pipelines` | — | List pipelines |
+| GET | `/api/v1/pipelines/{id}` | — | Get pipeline status with stage results |
+| POST | `/api/v1/users` | ADMIN | Create user |
+| GET | `/api/v1/users` | ADMIN | List users |
+| GET | `/api/v1/audit` | ADMIN/AUDITOR | Query audit log |
+| GET | `/api/v1/audit/{id}/verify` | ADMIN/AUDITOR | Verify audit entry integrity |
+| POST | `/api/v1/consent` | consent:create | Grant patient consent |
+| GET | `/api/v1/consent` | consent:read | List consents |
+| POST | `/api/v1/consent/{id}/revoke` | consent:create | Revoke consent |
+| POST | `/api/v1/tenants` | — | Create tenant |
+| GET | `/api/v1/tenants` | — | List tenants |
 
-### Pipeline execution
+### Pipeline Execution
 
 ```bash
 # 1. Create a source connection
 curl -X POST http://localhost:8000/api/v1/sources \
   -H "Content-Type: application/json" \
-  -d '{"name": "HAPI FHIR", "base_url": "https://hapi.fhir.org/baseR4", "server_type": "hapi", "auth_method": "api_key"}'
+  -d '{"name":"HAPI FHIR","base_url":"https://hapi.fhir.org/baseR4","server_type":"hapi","auth_method":"none"}'
 
 # 2. Create mappings from templates
 curl -X POST http://localhost:8000/api/v1/mappings \
   -H "Content-Type: application/json" \
-  -d '{"name": "Patient to Person", "template_id": "patient-to-person"}'
+  -d '{"name":"Patient to Person","template_id":"patient-to-person"}'
 
-# 3. Run pipeline
+# 3. Run pipeline (extracts → transforms → loads)
 curl -X POST http://localhost:8000/api/v1/pipelines \
   -H "Content-Type: application/json" \
-  -d '{"name": "Demo", "source_connection_id": "<source-id>", "mapping_config_ids": ["<mapping-id>"], "target_connection_string": "postgresql://omop:omop@omop-db:5432/omop"}'
+  -d '{"name":"Demo Run","source_connection_id":"<id>","mapping_config_ids":["<id>"],"target_connection_string":"postgresql://omop:omop@localhost:5433/omop"}'
 ```
 
 ## Mapping Templates
 
-| Template | FHIR Resource | OMOP Table |
-|----------|---------------|------------|
-| `patient-to-person` | Patient | person |
-| `encounter-to-visit` | Encounter | visit_occurrence |
-| `condition-to-condition-occurrence` | Condition | condition_occurrence |
-| `observation-to-measurement` | Observation | measurement |
+Four pre-built FHIR R4 → OMOP CDM v5.4 templates:
+
+| Template | FHIR Resource | OMOP Table | Fields |
+|----------|---------------|------------|--------|
+| `patient-to-person` | Patient | person | gender, birth date, identifiers |
+| `encounter-to-visit` | Encounter | visit_occurrence | visit type, period, class |
+| `condition-to-condition-occurrence` | Condition | condition_occurrence | SNOMED codes, onset date |
+| `observation-to-measurement` | Observation | measurement | LOINC codes, values, units |
+
+## Frontend
+
+Zero-build static SPA served by FastAPI — no Node.js required.
+
+- **Styling**: Tailwind CSS via CDN
+- **Font**: Inter (Google Fonts, Arabic-compatible)
+- **Routing**: Hash-based SPA (`#/dashboard`, `#/sources`, etc.)
+- **Auth**: JWT in localStorage, auto-injected on all API calls, 401 → redirect to login
+- **Role Filtering**: Admin-only pages hidden from non-admin users
+
+```
+frontend/
+├── index.html              # App shell: sidebar nav, router mount
+├── css/app.css             # Design tokens, component classes
+└── js/
+    ├── main.js             # Boot: route registration, sidebar init
+    ├── core/               # api.js, auth.js, router.js, utils.js
+    └── pages/              # login, dashboard, sources, mappings,
+                            # pipelines, users, audit, consent, tenants
+```
+
+## Security & Compliance
+
+| Feature | Implementation |
+|---------|----------------|
+| Authentication | JWT (HS256) — 30m access + 24h refresh tokens |
+| Authorization | RBAC — ADMIN, DATA_STEWARD, OPERATOR, AUDITOR |
+| Audit Trail | ISO 27789 — immutable entries with SHA-256 checksums |
+| Encryption | AES-256-GCM for PII fields at rest |
+| Consent | PDPL — purpose, scope, expiry, grant/revoke |
+| Multi-Tenancy | Tenant-scoped data isolation |
+| Security Headers | NCA ECC-2:2024 — CSP, HSTS, X-Frame-Options |
+| Rate Limiting | Token bucket — 100 req/min, 20-burst per IP |
+| Data Classification | NDMO 4-level — PUBLIC → TOP_SECRET |
+| NPHIES | Profile validation, identifier systems, code systems |
 
 ## Development
 
 ```bash
-# Create venv and install
-python -m venv .venv
-source .venv/bin/activate
+# Setup
+python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 
-# Run tests (86 tests)
+# Run tests (244 tests, ~7s)
 pytest
 
 # Run with coverage
-pytest --cov=src
+pytest --cov=src --cov-report=term-missing
 
-# Lint
+# Lint & type check
 ruff check src/ tests/
 mypy src/
 ```
 
-### Project structure
+### Project Structure
 
 ```
 src/
-├── domain/           # Entities, value objects, ports, services, events
-├── application/      # Use cases (commands + queries), DTOs
-├── infrastructure/   # Adapters (FHIR, OMOP, Whistle), repositories, config
-└── presentation/     # FastAPI app, routers, schemas
+├── domain/               # Entities, value objects, ports, services, events
+├── application/          # Use cases (commands + queries), DTOs
+├── infrastructure/       # Adapters, repositories, middleware, config, templates
+└── presentation/         # FastAPI app, routers, schemas, dependencies
+frontend/
+├── index.html            # SPA shell
+├── css/app.css           # Tailwind extensions
+└── js/                   # ES modules (core + 9 page modules)
 tests/
-├── domain/           # Entity and value object tests
-├── application/      # Use case tests
-├── infrastructure/   # Adapter and repository tests
-└── integration/      # API endpoint tests
-db/init/              # OMOP CDM v5.4 schema SQL
-scripts/              # Demo and utility scripts
+├── domain/               # Pure business logic tests
+├── application/          # Use case tests with mock ports
+├── infrastructure/       # Adapter, middleware, repository tests
+└── integration/          # End-to-end API tests
+db/init/                  # PostgreSQL schema (OMOP CDM v5.4 + enterprise tables)
 ```
 
-## Query OMOP Data
+## Environment Variables
 
-```bash
-docker compose exec omop-db psql -U omop -c "SELECT count(*) FROM person;"
-docker compose exec omop-db psql -U omop -c "SELECT * FROM visit_occurrence LIMIT 5;"
-```
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `STORAGE_BACKEND` | `postgresql` | `postgresql` or `memory` |
+| `APP_DATABASE_URL` | `postgresql://omop:omop@localhost:5433/omop` | Database connection |
+| `JWT_SECRET_KEY` | `dev-secret-...` | JWT signing key (≥32 chars in production) |
+| `ENCRYPTION_MASTER_KEY` | — | Hex-encoded 32-byte AES key |
 
 ## Tech Stack
 
-- **Python 3.11+**, FastAPI, Pydantic v2
-- **asyncpg** for PostgreSQL async I/O
-- **httpx** for FHIR server communication
+- **Python 3.11+** with async/await throughout
+- **FastAPI** + **Pydantic v2** for REST API
+- **asyncpg** for PostgreSQL async I/O (pool: min=2, max=20)
 - **PostgreSQL 16** with OMOP CDM v5.4 schema
-- **Docker Compose** for local development
+- **PyJWT** + **bcrypt** + **cryptography** for auth/encryption
+- **httpx** for async FHIR server communication
+- **Tailwind CSS** + **Vanilla JS** for zero-build frontend
+- **Docker Compose** for containerized deployment
+
+## License
+
+Proprietary. All rights reserved.
