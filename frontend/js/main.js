@@ -15,6 +15,7 @@ import { renderUsers } from './pages/users.js';
 import { renderAudit } from './pages/audit.js';
 import { renderConsent } from './pages/consent.js';
 import { renderTenants } from './pages/tenants.js';
+import { renderTargetRecords } from './pages/target-records.js';
 
 // Register all routes
 registerRoute('#/login',     { render: renderLogin });
@@ -22,6 +23,7 @@ registerRoute('#/dashboard', { render: renderDashboard });
 registerRoute('#/sources',   { render: renderSources });
 registerRoute('#/mappings',  { render: renderMappings });
 registerRoute('#/pipelines', { render: renderPipelines });
+registerRoute('#/target-records', { render: renderTargetRecords });
 registerRoute('#/users',     { render: renderUsers, roles: ['admin'] });
 registerRoute('#/audit',     { render: renderAudit, roles: ['admin', 'auditor'] });
 registerRoute('#/consent',   { render: renderConsent });

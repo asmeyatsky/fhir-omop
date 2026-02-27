@@ -128,6 +128,8 @@ Base URL: `http://localhost:8000/api/v1` | Swagger: `http://localhost:8000/docs`
 | POST | `/api/v1/pipelines` | — | Execute FHIR-to-OMOP pipeline |
 | GET | `/api/v1/pipelines` | — | List pipelines |
 | GET | `/api/v1/pipelines/{id}` | — | Get pipeline status with stage results |
+| GET | `/api/v1/target-records/tables` | Bearer | List OMOP tables (for Target Records view) |
+| GET | `/api/v1/target-records` | Bearer | Paginated rows from an OMOP table (`?table=&limit=&offset=`) |
 | POST | `/api/v1/users` | ADMIN | Create user |
 | GET | `/api/v1/users` | ADMIN | List users |
 | GET | `/api/v1/audit` | ADMIN/AUDITOR | Query audit log |
@@ -250,6 +252,7 @@ db/init/                  # PostgreSQL schema (OMOP CDM v5.4 + enterprise tables
 | `APP_DATABASE_URL` | `postgresql://omop:omop@localhost:5433/omop` | Database connection |
 | `JWT_SECRET_KEY` | `dev-secret-...` | JWT signing key (≥32 chars in production) |
 | `ENCRYPTION_MASTER_KEY` | — | Hex-encoded 32-byte AES key |
+| `OMOP_TARGET_READ_URL` | `postgresql://omop:omop@localhost:5433/omop` | OMOP DB used for **Target Records** (paginated view in the UI) |
 
 ## Tech Stack
 
