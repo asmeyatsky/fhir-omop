@@ -54,16 +54,16 @@ export async function renderConsent(root) {
           <tbody>
             ${consents.map(c => `
               <tr>
-                <td class="font-mono text-xs text-gray-300">${escapeHtml(c.patient_id)}</td>
+                <td class="font-mono text-xs text-ink-700">${escapeHtml(c.patient_id)}</td>
                 <td><span class="badge badge-info">${c.purpose}</span></td>
-                <td class="text-gray-400 text-xs">${c.scope}</td>
+                <td class="text-ink-500 text-xs">${c.scope}</td>
                 <td>${statusBadge(c.status)}</td>
-                <td class="text-gray-400 text-xs">${formatDateTime(c.granted_at)}</td>
-                <td class="text-gray-400 text-xs">${formatDateTime(c.expires_at)}</td>
+                <td class="text-ink-500 text-xs">${formatDateTime(c.granted_at)}</td>
+                <td class="text-ink-500 text-xs">${formatDateTime(c.expires_at)}</td>
                 <td>
                   ${c.status === 'granted' && c.is_valid ? `
                     <button class="btn btn-danger btn-sm revoke-btn" data-id="${c.id}">Revoke</button>
-                  ` : '<span class="text-xs text-gray-600">—</span>'}
+                  ` : '<span class="text-xs text-ink-500">—</span>'}
                 </td>
               </tr>
             `).join('')}
@@ -98,7 +98,7 @@ export async function renderConsent(root) {
   document.getElementById('grant-consent-btn').addEventListener('click', () => {
     showModal(`
       <div class="p-6">
-        <h3 class="text-lg font-semibold text-white mb-4">Grant Patient Consent</h3>
+        <h3 class="text-lg font-semibold text-ink-900 mb-4">Grant Patient Consent</h3>
         <form id="consent-form" class="space-y-4">
           <div>
             <label class="form-label">Patient ID</label>

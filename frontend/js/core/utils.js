@@ -51,12 +51,12 @@ export function statusBadge(status) {
 export function roleBadge(role) {
   if (!role) return '';
   const colors = {
-    admin: 'text-gold-500 bg-gold-500/15',
-    auditor: 'text-purple-400 bg-purple-500/15',
-    operator: 'text-blue-400 bg-blue-500/15',
-    data_steward: 'text-teal-400 bg-teal-500/15',
+    admin: 'text-brand-900 bg-brand-100',
+    auditor: 'text-ink-700 bg-ink-100',
+    operator: 'text-brand-700 bg-brand-100',
+    data_steward: 'text-brand-800 bg-brand-200',
   };
-  const cls = colors[role] || 'text-gray-400 bg-gray-500/15';
+  const cls = colors[role] || 'text-ink-500 bg-ink-100';
   return `<span class="badge ${cls}">${role.replace(/_/g, ' ')}</span>`;
 }
 

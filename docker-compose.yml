@@ -25,7 +25,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      OMOP_DATABASE_URL: postgresql://omop:omop@omop-db:5432/omop
+      STORAGE_BACKEND: postgresql
+      APP_DATABASE_URL: postgresql://omop:omop@omop-db:5432/omop
     depends_on:
       omop-db:
         condition: service_healthy

@@ -37,17 +37,17 @@ export async function renderUsers(root) {
               <tr>
                 <td>
                   <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-navy-700 rounded-full flex items-center justify-center text-sm font-medium text-teal-400">${(u.email || '?')[0].toUpperCase()}</div>
+                    <div class="w-8 h-8 bg-brand-400 rounded-full flex items-center justify-center text-sm font-medium text-white">${(u.email || '?')[0].toUpperCase()}</div>
                     <div>
-                      <div class="font-medium text-gray-200">${escapeHtml(u.full_name)}</div>
-                      <div class="text-xs text-gray-500">${escapeHtml(u.email)}</div>
+                      <div class="font-medium text-ink-800">${escapeHtml(u.full_name)}</div>
+                      <div class="text-xs text-ink-500">${escapeHtml(u.email)}</div>
                     </div>
                   </div>
                 </td>
                 <td>${roleBadge(u.role)}</td>
-                <td class="text-xs text-gray-400 font-mono">${u.tenant_id.substring(0, 8)}...</td>
+                <td class="text-xs text-ink-500 font-mono">${u.tenant_id.substring(0, 8)}...</td>
                 <td>${u.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-error">Inactive</span>'}</td>
-                <td class="text-gray-400 text-xs">${formatDateTime(u.created_at)}</td>
+                <td class="text-ink-500 text-xs">${formatDateTime(u.created_at)}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -66,7 +66,7 @@ export async function renderUsers(root) {
 
     showModal(`
       <div class="p-6">
-        <h3 class="text-lg font-semibold text-white mb-4">Create User</h3>
+        <h3 class="text-lg font-semibold text-ink-900 mb-4">Create User</h3>
         <form id="user-form" class="space-y-4">
           <div>
             <label class="form-label">Full Name</label>

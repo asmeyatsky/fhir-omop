@@ -11,19 +11,19 @@ export async function renderLogin(root) {
       <div class="w-full max-w-md">
         <!-- Brand -->
         <div class="text-center mb-8">
-          <div class="w-14 h-14 bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-500/20">
-            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+          <div class="w-14 h-14 bg-brand rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
             </svg>
           </div>
-          <h1 class="text-2xl font-bold text-white">FHIR-to-OMOP Accelerator</h1>
-          <p class="text-gray-400 text-sm mt-2">Enterprise Clinical Data Transformation Platform</p>
+          <h1 class="text-2xl font-bold text-ink-900">FHIR-to-OMOP Accelerator</h1>
+          <p class="text-ink-500 text-sm mt-2">Enterprise Clinical Data Transformation Platform</p>
         </div>
 
         <!-- Login card -->
         <div class="card">
           <div class="card-body">
-            <h2 class="text-lg font-semibold text-white mb-6">Sign in to your account</h2>
+            <h2 class="text-lg font-semibold text-ink-900 mb-6">Sign in to your account</h2>
             <form id="login-form" class="space-y-4">
               <div>
                 <label class="form-label" for="login-email">Email address</label>
@@ -41,11 +41,11 @@ export async function renderLogin(root) {
                 </svg>
               </button>
             </form>
-            <p class="text-xs text-gray-500 text-center mt-6">Protected under NCA ECC-2:2024 compliance</p>
+            <p class="text-xs text-ink-500 text-center mt-6">Protected under NCA ECC-2:2024 compliance</p>
           </div>
         </div>
 
-        <p class="text-center text-xs text-gray-600 mt-6">FHIR-to-OMOP Data Accelerator v0.2.0</p>
+        <p class="text-center text-xs text-ink-500 mt-6">FHIR-to-OMOP Data Accelerator v0.2.0</p>
       </div>
     </div>
   `;

@@ -10,7 +10,7 @@ function stageProgress(pipeline) {
   if (!pipeline.stage_results || !pipeline.stage_results.length) {
     if (pipeline.status === 'running') {
       return `<div class="flex gap-1 mt-2">${STAGES.map(() =>
-        `<div class="h-1.5 flex-1 bg-navy-700 rounded-full overflow-hidden"><div class="h-full bg-teal-500/30 animate-pulse-glow rounded-full w-full"></div></div>`
+        `<div class="h-1.5 flex-1 bg-surface-muted rounded-full overflow-hidden"><div class="h-full bg-brand/40 animate-pulse-glow rounded-full w-full"></div></div>`
       ).join('')}</div>`;
     }
     return '';
@@ -19,7 +19,7 @@ function stageProgress(pipeline) {
   return `<div class="flex gap-1 mt-2">${STAGES.map(s => {
     const done = completed.includes(s);
     const current = pipeline.current_stage === s;
-    const cls = done ? 'bg-teal-500' : current ? 'bg-teal-500/50 animate-pulse-glow' : 'bg-navy-600';
+    const cls = done ? 'bg-brand' : current ? 'bg-brand/60 animate-pulse-glow' : 'bg-ink-200';
     return `<div class="h-1.5 flex-1 ${cls} rounded-full" title="${s}"></div>`;
   }).join('')}</div>`;
 }
@@ -27,28 +27,28 @@ function stageProgress(pipeline) {
 function pipelineDetail(p) {
   const stages = (p.stage_results || []).map(s => `
     <tr>
-      <td class="font-medium text-gray-200 capitalize">${s.stage}</td>
+      <td class="font-medium text-ink-800 capitalize">${s.stage}</td>
       <td>${formatNumber(s.records_in)}</td>
       <td>${formatNumber(s.records_out)}</td>
-      <td class="${s.error_count > 0 ? 'text-red-400' : 'text-gray-400'}">${formatNumber(s.error_count)}</td>
+      <td class="${s.error_count > 0 ? 'text-red-600' : 'text-ink-500'}">${formatNumber(s.error_count)}</td>
     </tr>
   `).join('');
 
   showModal(`
     <div class="p-6">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-white">${escapeHtml(p.name)}</h3>
+        <h3 class="text-lg font-semibold text-ink-900">${escapeHtml(p.name)}</h3>
         ${statusBadge(p.status)}
       </div>
       <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
-        <div><span class="text-gray-500">Created:</span> <span class="text-gray-300">${formatDateTime(p.created_at)}</span></div>
-        <div><span class="text-gray-500">Started:</span> <span class="text-gray-300">${formatDateTime(p.started_at)}</span></div>
-        <div><span class="text-gray-500">Completed:</span> <span class="text-gray-300">${formatDateTime(p.completed_at)}</span></div>
-        <div><span class="text-gray-500">Records:</span> <span class="text-gray-300">${formatNumber(p.total_records)}</span></div>
+        <div><span class="text-ink-500">Created:</span> <span class="text-ink-800">${formatDateTime(p.created_at)}</span></div>
+        <div><span class="text-ink-500">Started:</span> <span class="text-ink-800">${formatDateTime(p.started_at)}</span></div>
+        <div><span class="text-ink-500">Completed:</span> <span class="text-ink-800">${formatDateTime(p.completed_at)}</span></div>
+        <div><span class="text-ink-500">Records:</span> <span class="text-ink-800">${formatNumber(p.total_records)}</span></div>
       </div>
-      ${p.error_message ? `<div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4 text-sm text-red-300">${escapeHtml(p.error_message)}</div>` : ''}
+      ${p.error_message ? `<div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-sm text-red-700">${escapeHtml(p.error_message)}</div>` : ''}
       ${stages ? `
-        <h4 class="text-sm font-medium text-gray-400 mb-2">Stage Results</h4>
+        <h4 class="text-sm font-medium text-ink-600 mb-2">Stage Results</h4>
         <table class="data-table">
           <thead><tr><th>Stage</th><th>In</th><th>Out</th><th>Errors</th></tr></thead>
           <tbody>${stages}</tbody>
@@ -95,12 +95,12 @@ export async function renderPipelines(root) {
           <tbody>
             ${pipelines.map(p => `
               <tr class="cursor-pointer pipeline-row" data-id="${p.id}">
-                <td class="font-medium text-gray-200">${escapeHtml(p.name)}</td>
+                <td class="font-medium text-ink-800">${escapeHtml(p.name)}</td>
                 <td>${statusBadge(p.status)}</td>
                 <td class="w-32">${stageProgress(p)}</td>
                 <td>${formatNumber(p.total_records)}</td>
-                <td class="${p.total_errors > 0 ? 'text-red-400' : 'text-gray-400'}">${formatNumber(p.total_errors)}</td>
-                <td class="text-gray-400 text-xs">${formatDateTime(p.created_at)}</td>
+                <td class="${p.total_errors > 0 ? 'text-red-600' : 'text-ink-500'}">${formatNumber(p.total_errors)}</td>
+                <td class="text-ink-500 text-xs">${formatDateTime(p.created_at)}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -136,7 +136,7 @@ export async function renderPipelines(root) {
 
     showModal(`
       <div class="p-6">
-        <h3 class="text-lg font-semibold text-white mb-4">Create Pipeline</h3>
+        <h3 class="text-lg font-semibold text-ink-900 mb-4">Create Pipeline</h3>
         <form id="pipeline-form" class="space-y-4">
           <div>
             <label class="form-label">Pipeline Name</label>
@@ -149,7 +149,7 @@ export async function renderPipelines(root) {
           <div>
             <label class="form-label">Mapping Configurations</label>
             <select name="mapping_config_ids" class="form-select" multiple required size="3">${mappingOpts || '<option disabled>No mappings available</option>'}</select>
-            <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+            <p class="text-xs text-ink-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
           </div>
           <div>
             <label class="form-label">Target Connection String</label>

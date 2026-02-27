@@ -21,11 +21,17 @@ The frontend is a single-page application with a navy/teal enterprise design:
 ### Option A: In-Memory (No Database Required)
 
 ```bash
+python -m venv .venv && source .venv/bin/activate   # or .venv\Scripts\activate on Windows
 pip install -e ".[dev]"
-STORAGE_BACKEND=memory uvicorn src.presentation.api.app:app --port 8000
+STORAGE_BACKEND=memory uvicorn src.presentation.api.app:app --host 0.0.0.0 --port 8000
 ```
 
 Open **http://localhost:8000** — the frontend login page loads immediately.
+
+**First run:** If no users exist, the app creates a default admin so you can log in:
+
+- **Email:** `admin@local.dev` (or set `BOOTSTRAP_ADMIN_EMAIL`)
+- **Password:** `Admin123!` (or set `BOOTSTRAP_ADMIN_PASSWORD`)
 
 ### Option B: Docker Compose (Full Stack)
 
@@ -35,7 +41,7 @@ docker compose up -d --build
 # API + Frontend on port 8000
 ```
 
-Open **http://localhost:8000** or Swagger UI at **http://localhost:8000/docs**.
+Open **http://localhost:8000** or Swagger UI at **http://localhost:8000/docs**. The same bootstrap admin is created when using in-memory user/tenant storage (default in this setup).
 
 ## Architecture
 

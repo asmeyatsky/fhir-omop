@@ -11,6 +11,8 @@ Architectural Intent:
 from __future__ import annotations
 
 import logging
+import os
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -19,6 +21,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from src.domain.entities.tenant import Tenant
+from src.domain.entities.user import User, UserRole
 from src.infrastructure.config.container import AppContainer
 from src.infrastructure.middleware.audit_middleware import AuditMiddleware, set_global_audit_log
 from src.infrastructure.middleware.input_validation import InputValidationMiddleware
@@ -38,6 +42,35 @@ def get_container() -> AppContainer:
     return _container
 
 
+async def _bootstrap_demo_user(container: AppContainer) -> None:
+    """If no users exist, create a default tenant and admin user for local dev."""
+    users = await container.user_repo.list_all()
+    if users:
+        return
+    email = os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "admin@local.dev")
+    password = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD", "Admin123!")
+    tenant_id = str(uuid.uuid4())
+    user_id = str(uuid.uuid4())
+    tenant = Tenant.create(
+        id=tenant_id,
+        name="default",
+        hospital_name="Local Development",
+        nphies_facility_id=None,
+    )
+    await container.tenant_repo.save(tenant)
+    password_hash = container.password_service.hash_password(password)
+    user = User.create(
+        id=user_id,
+        email=email,
+        full_name="Local Admin",
+        role=UserRole.ADMIN,
+        tenant_id=tenant_id,
+        password_hash=password_hash,
+    )
+    await container.user_repo.save(user)
+    logger.info("Bootstrap: created default tenant and admin user %s", email)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _container
@@ -45,6 +78,7 @@ async def lifespan(app: FastAPI):
     _container.templates = load_all_templates()
     await _container.initialize()
     set_global_audit_log(_container.audit_log)
+    await _bootstrap_demo_user(_container)
     logger.info("Application initialized")
     yield
     await _container.shutdown()

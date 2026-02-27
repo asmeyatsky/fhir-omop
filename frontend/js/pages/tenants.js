@@ -30,11 +30,11 @@ export async function renderTenants(root) {
       }
 
       el.innerHTML = tenants.map(t => `
-        <div class="card p-5 hover:border-teal-500/30 transition-colors">
+        <div class="card p-5 hover:border-brand/30 transition-colors">
           <div class="flex items-start justify-between mb-3">
             <div>
-              <h3 class="text-sm font-semibold text-white">${escapeHtml(t.name)}</h3>
-              <p class="text-xs text-gray-400 mt-0.5">${escapeHtml(t.hospital_name)}</p>
+              <h3 class="text-sm font-semibold text-ink-900">${escapeHtml(t.name)}</h3>
+              <p class="text-xs text-ink-500 mt-0.5">${escapeHtml(t.hospital_name)}</p>
             </div>
             ${t.is_active
               ? '<span class="badge badge-success">Active</span>'
@@ -43,17 +43,17 @@ export async function renderTenants(root) {
           <div class="space-y-2 text-xs">
             ${t.nphies_facility_id ? `
               <div class="flex justify-between">
-                <span class="text-gray-500">NPHIES Facility ID</span>
-                <span class="font-mono text-gray-300">${escapeHtml(t.nphies_facility_id)}</span>
+                <span class="text-ink-500">NPHIES Facility ID</span>
+                <span class="font-mono text-ink-700">${escapeHtml(t.nphies_facility_id)}</span>
               </div>
             ` : ''}
             <div class="flex justify-between">
-              <span class="text-gray-500">Tenant ID</span>
-              <span class="font-mono text-gray-400">${t.id.substring(0, 12)}...</span>
+              <span class="text-ink-500">Tenant ID</span>
+              <span class="font-mono text-ink-500">${t.id.substring(0, 12)}...</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-gray-500">Created</span>
-              <span class="text-gray-400">${formatDateTime(t.created_at)}</span>
+              <span class="text-ink-500">Created</span>
+              <span class="text-ink-500">${formatDateTime(t.created_at)}</span>
             </div>
           </div>
         </div>
@@ -66,7 +66,7 @@ export async function renderTenants(root) {
   document.getElementById('add-tenant-btn').addEventListener('click', () => {
     showModal(`
       <div class="p-6">
-        <h3 class="text-lg font-semibold text-white mb-4">Add Tenant</h3>
+        <h3 class="text-lg font-semibold text-ink-900 mb-4">Add Tenant</h3>
         <form id="tenant-form" class="space-y-4">
           <div>
             <label class="form-label">Tenant Name</label>

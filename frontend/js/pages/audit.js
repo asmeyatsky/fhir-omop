@@ -35,7 +35,7 @@ export async function renderAudit(root) {
 
     <div class="card">
       <div class="card-header">
-        <span class="text-sm text-gray-400" id="audit-count"></span>
+        <span class="text-sm text-ink-500" id="audit-count"></span>
         <div class="flex gap-2">
           <button id="prev-page" class="btn btn-ghost btn-sm" disabled>&larr; Previous</button>
           <button id="next-page" class="btn btn-ghost btn-sm">Next &rarr;</button>
@@ -57,7 +57,7 @@ export async function renderAudit(root) {
 
       const el = document.getElementById('audit-table');
       if (!entries.length) {
-        el.innerHTML = '<div class="empty-state py-8"><p class="text-gray-500 text-sm">No audit entries found</p></div>';
+        el.innerHTML = '<div class="empty-state py-8"><p class="text-ink-500 text-sm">No audit entries found</p></div>';
         return;
       }
 
@@ -69,11 +69,11 @@ export async function renderAudit(root) {
           <tbody>
             ${entries.map(e => `
               <tr>
-                <td class="text-xs text-gray-400 whitespace-nowrap">${formatDateTime(e.timestamp)}</td>
+                <td class="text-xs text-ink-500 whitespace-nowrap">${formatDateTime(e.timestamp)}</td>
                 <td><span class="badge badge-info">${escapeHtml(e.event_type)}</span></td>
-                <td class="text-gray-300 text-xs">${escapeHtml(e.action)}</td>
-                <td class="text-xs text-gray-400">${e.actor_email || e.actor_id || '—'}</td>
-                <td class="text-xs font-mono text-gray-500">${e.resource_type ? `${e.resource_type}/${(e.resource_id || '').substring(0, 8)}` : '—'}</td>
+                <td class="text-ink-800 text-xs">${escapeHtml(e.action)}</td>
+                <td class="text-xs text-ink-500">${e.actor_email || e.actor_id || '—'}</td>
+                <td class="text-xs font-mono text-ink-500">${e.resource_type ? `${e.resource_type}/${(e.resource_id || '').substring(0, 8)}` : '—'}</td>
                 <td>${e.http_status ? statusBadge(e.http_status < 400 ? 'completed' : 'error') : '—'}</td>
                 <td>
                   <button class="btn btn-ghost btn-sm verify-btn" data-id="${e.id}" title="Verify integrity">

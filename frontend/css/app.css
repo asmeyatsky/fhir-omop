@@ -1,43 +1,44 @@
-/* ===== Design Tokens & Custom Components ===== */
+/* ===== Design Tokens — White background, Poppins, brand #0064FF palette ===== */
+/* Flat imagery and icons; no 3D or lighting effects. Professional corporate. */
 
-/* Scrollbar */
+/* Scrollbar — flat, palette */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
+::-webkit-scrollbar-track { background: #e7f0fe; }
+::-webkit-scrollbar-thumb { background: #bdbdbd; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9e9e9e; }
 
-/* Nav links */
+/* Nav links — flat, no gradients */
 .nav-link {
-  @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-400
-         hover:text-gray-200 hover:bg-navy-700/50 transition-all duration-150;
+  @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-ink-600
+         hover:text-ink-900 hover:bg-brand-50 transition-all duration-150;
 }
 .nav-link.active {
-  @apply text-teal-400 bg-teal-500/10 font-medium;
+  @apply text-brand bg-brand-100 font-medium;
 }
 
-/* Status badges */
+/* Status badges — flat fills from palette */
 .badge {
   @apply inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium tracking-wide;
 }
-.badge-success { @apply bg-emerald-500/15 text-emerald-400; }
-.badge-warning { @apply bg-amber-500/15 text-amber-400; }
-.badge-error   { @apply bg-red-500/15 text-red-400; }
-.badge-info    { @apply bg-blue-500/15 text-blue-400; }
-.badge-neutral { @apply bg-gray-500/15 text-gray-400; }
-.badge-teal    { @apply bg-teal-500/15 text-teal-400; }
+.badge-success { @apply bg-brand-100 text-brand-800; }
+.badge-warning { @apply bg-brand-200 text-brand-900; }
+.badge-error   { @apply bg-red-50 text-red-600; }
+.badge-info    { @apply bg-brand-100 text-brand-700; }
+.badge-neutral { @apply bg-ink-100 text-ink-600; }
+.badge-teal    { @apply bg-brand-100 text-brand; }
 
-/* Cards */
+/* Cards — white, flat border */
 .card {
-  @apply bg-navy-800 rounded-xl border border-gray-700/50 shadow-lg;
+  @apply bg-white rounded-xl border border-surface-border shadow-sm;
 }
 .card-header {
-  @apply px-5 py-4 border-b border-gray-700/30 flex items-center justify-between;
+  @apply px-5 py-4 border-b border-surface-border flex items-center justify-between;
 }
 .card-body {
   @apply p-5;
 }
 
-/* KPI card */
+/* KPI card — flat icon background */
 .kpi-card {
   @apply card p-5 relative overflow-hidden;
 }
@@ -45,70 +46,70 @@
   @apply w-10 h-10 rounded-lg flex items-center justify-center;
 }
 .kpi-card .kpi-value {
-  @apply text-2xl font-bold text-white mt-3;
+  @apply text-2xl font-bold text-ink-900 mt-3;
 }
 .kpi-card .kpi-label {
-  @apply text-sm text-gray-400 mt-1;
+  @apply text-sm text-ink-500 mt-1;
 }
 
-/* Tables */
+/* Tables — readable on white */
 .data-table {
   @apply w-full text-sm;
 }
 .data-table thead th {
-  @apply text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-4 py-3 border-b border-gray-700/30;
+  @apply text-left text-[11px] font-semibold text-ink-500 uppercase tracking-wider px-4 py-3 border-b border-surface-border;
 }
 .data-table tbody td {
-  @apply px-4 py-3 border-b border-gray-700/20 text-gray-300;
+  @apply px-4 py-3 border-b border-surface-border/60 text-ink-800;
 }
 .data-table tbody tr {
-  @apply hover:bg-navy-700/30 transition-colors;
+  @apply hover:bg-brand-50/50 transition-colors;
 }
 
-/* Buttons */
+/* Buttons — flat primary = brand */
 .btn {
   @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
          transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
 }
 .btn-primary {
-  @apply bg-teal-500 text-white hover:bg-teal-600 active:bg-teal-700 shadow-lg shadow-teal-500/20;
+  @apply bg-brand text-white hover:bg-brand-900 active:bg-brand-950;
 }
 .btn-secondary {
-  @apply bg-navy-700 text-gray-300 hover:bg-navy-600 border border-gray-600/50;
+  @apply bg-white text-ink-700 hover:bg-brand-50 border border-surface-border;
 }
 .btn-danger {
-  @apply bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/30;
+  @apply bg-red-50 text-red-600 hover:bg-red-100 border border-red-200;
 }
 .btn-ghost {
-  @apply text-gray-400 hover:text-gray-200 hover:bg-navy-700/50;
+  @apply text-ink-500 hover:text-ink-800 hover:bg-brand-50;
 }
 .btn-sm {
   @apply px-3 py-1.5 text-xs;
 }
 
-/* Form inputs */
+/* Form inputs — white bg, dark text, flat focus ring */
 .form-input {
-  @apply w-full bg-navy-900/50 border border-gray-700/50 rounded-lg px-3 py-2 text-sm text-gray-200
-         placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500/50
+  @apply w-full bg-white border border-surface-border rounded-lg px-3 py-2 text-sm text-ink-900
+         placeholder-ink-400 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand
          transition-all duration-150;
 }
 .form-label {
-  @apply block text-sm font-medium text-gray-400 mb-1.5;
+  @apply block text-sm font-medium text-ink-700 mb-1.5;
 }
 .form-select {
-  @apply form-input appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%236b7280%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M5.23%207.21a.75.75%200%20011.06.02L10%2011.168l3.71-3.938a.75.75%200%20111.08%201.04l-4.25%204.5a.75.75%200%2001-1.08%200l-4.25-4.5a.75.75%200%2001.02-1.06z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_0.5rem_center] bg-[length:1.25rem] pr-8;
+  @apply form-input appearance-none bg-white bg-no-repeat bg-[right_0.5rem_center] bg-[length:1.25rem] pr-8;
 }
 
-/* Toast notifications */
+/* Toast notifications — flat, palette */
 .toast {
-  @apply flex items-center gap-3 px-4 py-3 rounded-lg shadow-xl border min-w-[300px] max-w-md
+  @apply flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border min-w-[300px] max-w-md
          animate-slide-in;
 }
-.toast-success { @apply bg-emerald-500/10 border-emerald-500/30 text-emerald-300; }
-.toast-error   { @apply bg-red-500/10 border-red-500/30 text-red-300; }
-.toast-info    { @apply bg-blue-500/10 border-blue-500/30 text-blue-300; }
+.toast-success { @apply bg-brand-50 border-brand-300 text-brand-900; }
+.toast-error   { @apply bg-red-50 border-red-200 text-red-700; }
+.toast-info    { @apply bg-brand-50 border-brand-300 text-brand-900; }
 
-/* Animations */
+/* Animations — subtle */
 @keyframes slide-in {
   from { opacity: 0; transform: translateX(1rem); }
   to   { opacity: 1; transform: translateX(0); }
@@ -119,18 +120,18 @@
 }
 @keyframes pulse-glow {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50% { opacity: 0.7; }
 }
 .animate-slide-in { animation: slide-in 0.2s ease-out; }
 .animate-fade-in  { animation: fade-in 0.15s ease-out; }
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
 
-/* Progress bar */
+/* Progress bar — flat fill */
 .progress-bar {
-  @apply h-2 bg-navy-700 rounded-full overflow-hidden;
+  @apply h-2 bg-surface-muted rounded-full overflow-hidden;
 }
 .progress-bar-fill {
-  @apply h-full bg-gradient-to-r from-teal-500 to-teal-400 rounded-full transition-all duration-500;
+  @apply h-full bg-brand rounded-full transition-all duration-500;
 }
 
 /* Empty state */
@@ -138,10 +139,10 @@
   @apply flex flex-col items-center justify-center py-12 text-center;
 }
 .empty-state svg {
-  @apply w-12 h-12 text-gray-600 mb-4;
+  @apply w-12 h-12 text-ink-300 mb-4;
 }
 .empty-state p {
-  @apply text-gray-500 text-sm;
+  @apply text-ink-500 text-sm;
 }
 
 /* Page header */
@@ -149,13 +150,13 @@
   @apply flex items-center justify-between mb-6;
 }
 .page-title {
-  @apply text-xl font-semibold text-white;
+  @apply text-xl font-semibold text-ink-900;
 }
 .page-subtitle {
-  @apply text-sm text-gray-400 mt-1;
+  @apply text-sm text-ink-500 mt-1;
 }
 
-/* Skeleton loading */
+/* Skeleton loading — flat */
 .skeleton {
-  @apply bg-navy-700/50 rounded animate-pulse;
+  @apply bg-ink-100 rounded animate-pulse;
 }

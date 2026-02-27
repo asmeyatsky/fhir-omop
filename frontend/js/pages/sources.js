@@ -37,12 +37,12 @@ export async function renderSources(root) {
           <tbody>
             ${sources.map(s => `
               <tr>
-                <td class="font-medium text-gray-200">${escapeHtml(s.name)}</td>
+                <td class="font-medium text-ink-800">${escapeHtml(s.name)}</td>
                 <td><span class="badge badge-teal">${s.server_type}</span></td>
-                <td class="text-xs font-mono text-gray-400 max-w-[200px] truncate">${escapeHtml(s.base_url)}</td>
-                <td class="text-gray-400">${s.auth_method}</td>
+                <td class="text-xs font-mono text-ink-500 max-w-[200px] truncate">${escapeHtml(s.base_url)}</td>
+                <td class="text-ink-500">${s.auth_method}</td>
                 <td>${statusBadge(s.status)}</td>
-                <td class="text-gray-400 text-xs">${formatDateTime(s.last_tested_at)}</td>
+                <td class="text-ink-500 text-xs">${formatDateTime(s.last_tested_at)}</td>
                 <td>
                   <button class="btn btn-ghost btn-sm test-source-btn" data-id="${s.id}">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
@@ -80,7 +80,7 @@ export async function renderSources(root) {
   document.getElementById('add-source-btn').addEventListener('click', () => {
     showModal(`
       <div class="p-6">
-        <h3 class="text-lg font-semibold text-white mb-4">Add FHIR Source Connection</h3>
+        <h3 class="text-lg font-semibold text-ink-900 mb-4">Add FHIR Source Connection</h3>
         <form id="source-form" class="space-y-4">
           <div>
             <label class="form-label">Connection Name</label>
