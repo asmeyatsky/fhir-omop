@@ -114,6 +114,62 @@ class InMemoryTenantRepository:
         self._store.pop(id, None)
 
 
+class InMemoryAuditLog:
+    """In-memory implementation of AuditLogPort for testing."""
+
+    def __init__(self) -> None:
+        self._store: list[object] = []
+
+    async def record(self, entry: object) -> None:
+        self._store.append(entry)
+
+    async def get_by_id(self, id: str) -> object | None:
+        for e in self._store:
+            if getattr(e, "id", None) == id:
+                return e
+        return None
+
+    async def query(
+        self,
+        tenant_id: str | None = None,
+        actor_id: str | None = None,
+        event_type: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list:
+        results = self._store
+        if tenant_id:
+            results = [e for e in results if getattr(e, "tenant_id", None) == tenant_id]
+        if actor_id:
+            results = [e for e in results if getattr(e, "actor_id", None) == actor_id]
+        if event_type:
+            results = [
+                e for e in results
+                if getattr(getattr(e, "event_type", None), "value", None) == event_type
+            ]
+        # Sort by timestamp descending
+        results = sorted(results, key=lambda e: getattr(e, "timestamp", ""), reverse=True)
+        return results[offset:offset + limit]
+
+    async def count(
+        self,
+        tenant_id: str | None = None,
+        actor_id: str | None = None,
+        event_type: str | None = None,
+    ) -> int:
+        results = self._store
+        if tenant_id:
+            results = [e for e in results if getattr(e, "tenant_id", None) == tenant_id]
+        if actor_id:
+            results = [e for e in results if getattr(e, "actor_id", None) == actor_id]
+        if event_type:
+            results = [
+                e for e in results
+                if getattr(getattr(e, "event_type", None), "value", None) == event_type
+            ]
+        return len(results)
+
+
 class InMemoryEventBus:
     """In-memory event bus for development. Logs events."""
 

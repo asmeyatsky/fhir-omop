@@ -16,6 +16,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.infrastructure.config.container import AppContainer
+from src.infrastructure.middleware.audit_middleware import AuditMiddleware, set_global_audit_log
 from src.infrastructure.templates.registry import load_all_templates
 from src.presentation.api.schemas import HealthResponse
 
@@ -36,6 +37,7 @@ async def lifespan(app: FastAPI):
     _container = AppContainer()
     _container.templates = load_all_templates()
     await _container.initialize()
+    set_global_audit_log(_container.audit_log)
     logger.info("Application initialized")
     yield
     await _container.shutdown()
@@ -60,6 +62,9 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Audit middleware — audit_log is injected during lifespan after container init
+    app.add_middleware(AuditMiddleware, audit_log=None)
+
     # Import and register routers
     from src.presentation.api.mapping_router import router as mapping_router
     from src.presentation.api.pipeline_router import router as pipeline_router
@@ -67,6 +72,7 @@ def create_app() -> FastAPI:
     from src.presentation.api.auth_router import router as auth_router
     from src.presentation.api.tenant_router import router as tenant_router
     from src.presentation.api.user_router import router as user_router
+    from src.presentation.api.audit_router import router as audit_router
 
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(user_router, prefix="/api/v1")
@@ -74,6 +80,7 @@ def create_app() -> FastAPI:
     app.include_router(mapping_router, prefix="/api/v1")
     app.include_router(pipeline_router, prefix="/api/v1")
     app.include_router(tenant_router, prefix="/api/v1")
+    app.include_router(audit_router, prefix="/api/v1")
 
     @app.get("/health", response_model=HealthResponse, tags=["Health"])
     async def health_check():

@@ -35,6 +35,7 @@ from src.application.commands.manage_users import CreateUserUseCase
 from src.infrastructure.adapters.auth.jwt_token_service import JWTTokenService
 from src.infrastructure.adapters.auth.password_service import BcryptPasswordService
 from src.infrastructure.repositories.in_memory import (
+    InMemoryAuditLog,
     InMemoryEventBus,
     InMemoryMappingConfigRepository,
     InMemoryPipelineRepository,
@@ -68,6 +69,7 @@ class AppContainer:
     event_bus: object = field(default_factory=InMemoryEventBus)
     tenant_repo: object = field(default_factory=InMemoryTenantRepository)
     user_repo: object = field(default_factory=InMemoryUserRepository)
+    audit_log: object = field(default_factory=InMemoryAuditLog)
 
     # Auth services
     token_service: JWTTokenService = field(default_factory=JWTTokenService)
