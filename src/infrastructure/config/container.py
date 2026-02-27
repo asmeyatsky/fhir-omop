@@ -36,6 +36,7 @@ from src.infrastructure.adapters.auth.jwt_token_service import JWTTokenService
 from src.infrastructure.adapters.auth.password_service import BcryptPasswordService
 from src.infrastructure.repositories.in_memory import (
     InMemoryAuditLog,
+    InMemoryConsentRepository,
     InMemoryEventBus,
     InMemoryMappingConfigRepository,
     InMemoryPipelineRepository,
@@ -70,6 +71,7 @@ class AppContainer:
     tenant_repo: object = field(default_factory=InMemoryTenantRepository)
     user_repo: object = field(default_factory=InMemoryUserRepository)
     audit_log: object = field(default_factory=InMemoryAuditLog)
+    consent_repo: object = field(default_factory=InMemoryConsentRepository)
 
     # Auth services
     token_service: JWTTokenService = field(default_factory=JWTTokenService)

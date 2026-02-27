@@ -114,6 +114,39 @@ class InMemoryTenantRepository:
         self._store.pop(id, None)
 
 
+class InMemoryConsentRepository:
+    """In-memory implementation of ConsentRepositoryPort."""
+
+    def __init__(self) -> None:
+        self._store: dict[str, object] = {}
+
+    async def save(self, consent: object) -> None:
+        self._store[consent.id] = consent  # type: ignore[attr-defined]
+
+    async def get_by_id(self, id: str) -> object | None:
+        return self._store.get(id)
+
+    async def get_active_consents(self, patient_id: str, tenant_id: str) -> list:
+        return [
+            c for c in self._store.values()
+            if getattr(c, "patient_id", None) == patient_id
+            and getattr(c, "tenant_id", None) == tenant_id
+            and getattr(c, "status", None).value == "active"
+        ]
+
+    async def list_by_tenant(
+        self, tenant_id: str, limit: int = 100, offset: int = 0
+    ) -> list:
+        results = [
+            c for c in self._store.values()
+            if getattr(c, "tenant_id", None) == tenant_id
+        ]
+        return results[offset:offset + limit]
+
+    async def delete(self, id: str) -> None:
+        self._store.pop(id, None)
+
+
 class InMemoryAuditLog:
     """In-memory implementation of AuditLogPort for testing."""
 

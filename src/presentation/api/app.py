@@ -73,6 +73,7 @@ def create_app() -> FastAPI:
     from src.presentation.api.tenant_router import router as tenant_router
     from src.presentation.api.user_router import router as user_router
     from src.presentation.api.audit_router import router as audit_router
+    from src.presentation.api.consent_router import router as consent_router
 
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(user_router, prefix="/api/v1")
@@ -81,6 +82,7 @@ def create_app() -> FastAPI:
     app.include_router(pipeline_router, prefix="/api/v1")
     app.include_router(tenant_router, prefix="/api/v1")
     app.include_router(audit_router, prefix="/api/v1")
+    app.include_router(consent_router, prefix="/api/v1")
 
     @app.get("/health", response_model=HealthResponse, tags=["Health"])
     async def health_check():
