@@ -30,12 +30,17 @@ from src.infrastructure.adapters.fhir.hapi_fhir_client import HAPIFHIRClient
 from src.infrastructure.adapters.omop.writer_factory import PostgreSQLOMOPWriterFactory
 from src.infrastructure.adapters.whistle.whistle_engine import WhistleEngine
 from src.infrastructure.config.database import DatabaseManager
+from src.application.commands.authenticate_user import AuthenticateUserUseCase
+from src.application.commands.manage_users import CreateUserUseCase
+from src.infrastructure.adapters.auth.jwt_token_service import JWTTokenService
+from src.infrastructure.adapters.auth.password_service import BcryptPasswordService
 from src.infrastructure.repositories.in_memory import (
     InMemoryEventBus,
     InMemoryMappingConfigRepository,
     InMemoryPipelineRepository,
     InMemorySourceConnectionRepository,
     InMemoryTenantRepository,
+    InMemoryUserRepository,
 )
 
 
@@ -62,6 +67,11 @@ class AppContainer:
     pipeline_repo: object = field(default_factory=InMemoryPipelineRepository)
     event_bus: object = field(default_factory=InMemoryEventBus)
     tenant_repo: object = field(default_factory=InMemoryTenantRepository)
+    user_repo: object = field(default_factory=InMemoryUserRepository)
+
+    # Auth services
+    token_service: JWTTokenService = field(default_factory=JWTTokenService)
+    password_service: BcryptPasswordService = field(default_factory=BcryptPasswordService)
 
     # Infrastructure adapters
     fhir_client: HAPIFHIRClient = field(default_factory=HAPIFHIRClient)
@@ -96,6 +106,21 @@ class AppContainer:
         """Clean up resources."""
         if self.db_manager:
             await self.db_manager.close()
+
+    # --- Auth Use Cases ---
+
+    def authenticate_user_use_case(self) -> AuthenticateUserUseCase:
+        return AuthenticateUserUseCase(
+            user_repo=self.user_repo,
+            password_service=self.password_service,
+            token_service=self.token_service,
+        )
+
+    def create_user_use_case(self) -> CreateUserUseCase:
+        return CreateUserUseCase(
+            user_repo=self.user_repo,
+            password_service=self.password_service,
+        )
 
     # --- Use Cases ---
 

@@ -70,6 +70,31 @@ class InMemoryPipelineRepository:
         self._store.pop(id, None)
 
 
+class InMemoryUserRepository:
+    """In-memory implementation of UserRepositoryPort."""
+
+    def __init__(self) -> None:
+        self._store: dict[str, object] = {}
+
+    async def save(self, user: object) -> None:
+        self._store[user.id] = user  # type: ignore[attr-defined]
+
+    async def get_by_id(self, id: str) -> object | None:
+        return self._store.get(id)
+
+    async def get_by_email(self, email: str) -> object | None:
+        for u in self._store.values():
+            if getattr(u, "email", None) == email:
+                return u
+        return None
+
+    async def list_all(self) -> list:
+        return list(self._store.values())
+
+    async def delete(self, id: str) -> None:
+        self._store.pop(id, None)
+
+
 class InMemoryTenantRepository:
     """In-memory implementation of TenantRepositoryPort."""
 

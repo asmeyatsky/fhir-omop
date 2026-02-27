@@ -13,6 +13,9 @@ dependencies = [
     "fhir.resources>=8.0.0",
     "google-auth>=2.37.0",
     "redis>=5.2.0",
+    "PyJWT>=2.8.0",
+    "cryptography>=41.0.0",
+    "bcrypt>=4.1.0",
 ]
 
 [project.optional-dependencies]
