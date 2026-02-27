@@ -35,6 +35,7 @@ class FHIRServerType(str, Enum):
     AZURE = "azure"
     EPIC = "epic"
     CERNER = "cerner"
+    NPHIES = "nphies"
     CUSTOM = "custom"
 
 
