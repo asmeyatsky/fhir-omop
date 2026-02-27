@@ -5,9 +5,11 @@ Architectural Intent:
 - Composition root for the web application
 - Wires DI container, registers routers, configures middleware
 - Loads mapping templates on startup
+- Initializes database connections for persistent storage
 """
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -16,6 +18,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.infrastructure.config.container import AppContainer
 from src.infrastructure.templates.registry import load_all_templates
 from src.presentation.api.schemas import HealthResponse
+
+logger = logging.getLogger(__name__)
 
 _container: AppContainer | None = None
 
@@ -31,16 +35,20 @@ async def lifespan(app: FastAPI):
     global _container
     _container = AppContainer()
     _container.templates = load_all_templates()
+    await _container.initialize()
+    logger.info("Application initialized")
     yield
+    await _container.shutdown()
     _container = None
+    logger.info("Application shut down")
 
 
 def create_app() -> FastAPI:
     app = FastAPI(
         title="FHIR-to-OMOP Data Accelerator",
         description="Transform FHIR R4 clinical data into OMOP CDM v5.4 datasets. "
-        "Powered by Google Whistle Mapping Language.",
-        version="0.1.0",
+        "Enterprise edition for Saudi healthcare compliance.",
+        version="0.2.0",
         lifespan=lifespan,
     )
 
@@ -63,7 +71,7 @@ def create_app() -> FastAPI:
 
     @app.get("/health", response_model=HealthResponse, tags=["Health"])
     async def health_check():
-        return HealthResponse()
+        return HealthResponse(version="0.2.0")
 
     return app
 

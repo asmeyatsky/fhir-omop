@@ -5,9 +5,11 @@ Architectural Intent:
 - Wires all ports to their infrastructure implementations
 - Single place where infrastructure meets domain
 - Configurable via environment for dev/test/prod
+- Supports both in-memory (testing) and PostgreSQL (production) storage
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 
 from src.application.commands.create_mapping import CreateMappingFromTemplateUseCase
@@ -26,8 +28,8 @@ from src.domain.services.vocabulary_service import VocabularyDomainService
 from src.domain.value_objects.mapping import MappingTemplate
 from src.infrastructure.adapters.fhir.hapi_fhir_client import HAPIFHIRClient
 from src.infrastructure.adapters.omop.writer_factory import PostgreSQLOMOPWriterFactory
-from src.infrastructure.adapters.vocabulary.athena_vocabulary_service import AthenaVocabularyService
 from src.infrastructure.adapters.whistle.whistle_engine import WhistleEngine
+from src.infrastructure.config.database import DatabaseManager
 from src.infrastructure.repositories.in_memory import (
     InMemoryEventBus,
     InMemoryMappingConfigRepository,
@@ -50,17 +52,14 @@ class NoOpVocabularyLookup:
 class AppContainer:
     """Application dependency container. Holds all wired-up services."""
 
-    # Repositories
-    source_repo: InMemorySourceConnectionRepository = field(
-        default_factory=InMemorySourceConnectionRepository
-    )
-    mapping_repo: InMemoryMappingConfigRepository = field(
-        default_factory=InMemoryMappingConfigRepository
-    )
-    pipeline_repo: InMemoryPipelineRepository = field(
-        default_factory=InMemoryPipelineRepository
-    )
-    event_bus: InMemoryEventBus = field(default_factory=InMemoryEventBus)
+    # Database manager (initialized on startup for PostgreSQL backend)
+    db_manager: DatabaseManager | None = None
+
+    # Repositories (set during initialization based on STORAGE_BACKEND)
+    source_repo: object = field(default_factory=InMemorySourceConnectionRepository)
+    mapping_repo: object = field(default_factory=InMemoryMappingConfigRepository)
+    pipeline_repo: object = field(default_factory=InMemoryPipelineRepository)
+    event_bus: object = field(default_factory=InMemoryEventBus)
 
     # Infrastructure adapters
     fhir_client: HAPIFHIRClient = field(default_factory=HAPIFHIRClient)
@@ -71,6 +70,30 @@ class AppContainer:
 
     # Templates (populated during init)
     templates: dict[str, MappingTemplate] = field(default_factory=dict)
+
+    async def initialize(self) -> None:
+        """Initialize the container — sets up database if using PostgreSQL backend."""
+        storage_backend = os.environ.get("STORAGE_BACKEND", "postgresql")
+
+        if storage_backend == "postgresql":
+            from src.infrastructure.repositories.postgresql_event_bus import PostgreSQLEventBus
+            from src.infrastructure.repositories.postgresql_repos import (
+                PostgreSQLMappingConfigRepository,
+                PostgreSQLPipelineRepository,
+                PostgreSQLSourceConnectionRepository,
+            )
+
+            self.db_manager = DatabaseManager()
+            pool = await self.db_manager.get_pool()
+            self.source_repo = PostgreSQLSourceConnectionRepository(pool)
+            self.mapping_repo = PostgreSQLMappingConfigRepository(pool)
+            self.pipeline_repo = PostgreSQLPipelineRepository(pool)
+            self.event_bus = PostgreSQLEventBus(pool)
+
+    async def shutdown(self) -> None:
+        """Clean up resources."""
+        if self.db_manager:
+            await self.db_manager.close()
 
     # --- Use Cases ---
 
