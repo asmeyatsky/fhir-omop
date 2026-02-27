@@ -17,6 +17,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.infrastructure.config.container import AppContainer
 from src.infrastructure.middleware.audit_middleware import AuditMiddleware, set_global_audit_log
+from src.infrastructure.middleware.input_validation import InputValidationMiddleware
+from src.infrastructure.middleware.rate_limiter import RateLimiterMiddleware
+from src.infrastructure.middleware.security_headers import SecurityHeadersMiddleware
 from src.infrastructure.templates.registry import load_all_templates
 from src.presentation.api.schemas import HealthResponse
 
@@ -54,6 +57,10 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # Middleware stack (executed in reverse order of registration):
+    # SecurityHeaders → RateLimiter → CORS → Audit → InputValidation → App
+    app.add_middleware(InputValidationMiddleware)
+    app.add_middleware(AuditMiddleware, audit_log=None)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -61,9 +68,8 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    # Audit middleware — audit_log is injected during lifespan after container init
-    app.add_middleware(AuditMiddleware, audit_log=None)
+    app.add_middleware(RateLimiterMiddleware, requests_per_minute=100, burst_size=20)
+    app.add_middleware(SecurityHeadersMiddleware)
 
     # Import and register routers
     from src.presentation.api.mapping_router import router as mapping_router
