@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
+from src.domain.value_objects.classification import DataClassification
+
 
 class OMOPTable(str, Enum):
     """OMOP CDM v5.4 target tables for Phase 1."""
@@ -68,3 +70,4 @@ class OMOPRecord:
     data: dict
     source_fhir_id: str
     mapping_version: str
+    classification: DataClassification = DataClassification.CONFIDENTIAL

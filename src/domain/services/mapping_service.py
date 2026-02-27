@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from src.domain.entities.mapping_config import MappingConfiguration
 from src.domain.ports.whistle_engine_port import WhistleEnginePort
+from src.domain.services.classification_service import ClassificationService
 from src.domain.services.vocabulary_service import VocabularyDomainService
 from src.domain.value_objects.fhir import FHIRBundle
 from src.domain.value_objects.omop import OMOPRecord
@@ -23,9 +24,11 @@ class MappingDomainService:
         self,
         whistle_engine: WhistleEnginePort,
         vocabulary_service: VocabularyDomainService,
+        classification_service: ClassificationService | None = None,
     ) -> None:
         self._whistle = whistle_engine
         self._vocabulary = vocabulary_service
+        self._classifier = classification_service or ClassificationService()
 
     async def transform_bundle(
         self,
@@ -43,11 +46,16 @@ class MappingDomainService:
                 input_resource=resource,
             )
             if transformed is not None:
+                resource_type = resource.get("resourceType", "Unknown")
+                classification = self._classifier.classify_resource(
+                    resource_type, resource
+                )
                 record = OMOPRecord(
                     target_table=mapping.target_table,
                     data=transformed,
                     source_fhir_id=resource.get("id", "unknown"),
                     mapping_version=mapping.version,
+                    classification=classification,
                 )
                 records.append(record)
         return records
