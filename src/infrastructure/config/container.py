@@ -35,6 +35,7 @@ from src.infrastructure.repositories.in_memory import (
     InMemoryMappingConfigRepository,
     InMemoryPipelineRepository,
     InMemorySourceConnectionRepository,
+    InMemoryTenantRepository,
 )
 
 
@@ -60,6 +61,7 @@ class AppContainer:
     mapping_repo: object = field(default_factory=InMemoryMappingConfigRepository)
     pipeline_repo: object = field(default_factory=InMemoryPipelineRepository)
     event_bus: object = field(default_factory=InMemoryEventBus)
+    tenant_repo: object = field(default_factory=InMemoryTenantRepository)
 
     # Infrastructure adapters
     fhir_client: HAPIFHIRClient = field(default_factory=HAPIFHIRClient)

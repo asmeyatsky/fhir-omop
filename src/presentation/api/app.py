@@ -64,10 +64,12 @@ def create_app() -> FastAPI:
     from src.presentation.api.mapping_router import router as mapping_router
     from src.presentation.api.pipeline_router import router as pipeline_router
     from src.presentation.api.source_router import router as source_router
+    from src.presentation.api.tenant_router import router as tenant_router
 
     app.include_router(source_router, prefix="/api/v1")
     app.include_router(mapping_router, prefix="/api/v1")
     app.include_router(pipeline_router, prefix="/api/v1")
+    app.include_router(tenant_router, prefix="/api/v1")
 
     @app.get("/health", response_model=HealthResponse, tags=["Health"])
     async def health_check():

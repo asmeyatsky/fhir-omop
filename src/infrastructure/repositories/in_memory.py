@@ -70,6 +70,25 @@ class InMemoryPipelineRepository:
         self._store.pop(id, None)
 
 
+class InMemoryTenantRepository:
+    """In-memory implementation of TenantRepositoryPort."""
+
+    def __init__(self) -> None:
+        self._store: dict[str, object] = {}
+
+    async def save(self, tenant: object) -> None:
+        self._store[tenant.id] = tenant  # type: ignore[attr-defined]
+
+    async def get_by_id(self, id: str) -> object | None:
+        return self._store.get(id)
+
+    async def list_all(self) -> list:
+        return list(self._store.values())
+
+    async def delete(self, id: str) -> None:
+        self._store.pop(id, None)
+
+
 class InMemoryEventBus:
     """In-memory event bus for development. Logs events."""
 
