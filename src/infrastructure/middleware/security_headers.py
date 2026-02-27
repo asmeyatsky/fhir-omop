@@ -35,7 +35,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "max-age=31536000; includeSubDomains; preload"
         )
         response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+            "default-src 'self'; "
+            "script-src 'self' https://cdn.tailwindcss.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "connect-src 'self'"
         )
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = (

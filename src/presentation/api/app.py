@@ -6,14 +6,18 @@ Architectural Intent:
 - Wires DI container, registers routers, configures middleware
 - Loads mapping templates on startup
 - Initializes database connections for persistent storage
+- Serves frontend static files and SPA catch-all
 """
 from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from src.infrastructure.config.container import AppContainer
 from src.infrastructure.middleware.audit_middleware import AuditMiddleware, set_global_audit_log
@@ -93,6 +97,16 @@ def create_app() -> FastAPI:
     @app.get("/health", response_model=HealthResponse, tags=["Health"])
     async def health_check():
         return HealthResponse(version="0.2.0")
+
+    # Serve frontend static files
+    frontend_dir = Path(__file__).resolve().parent.parent.parent.parent / "frontend"
+    if frontend_dir.is_dir():
+        app.mount("/static", StaticFiles(directory=str(frontend_dir)), name="static")
+
+        @app.get("/{full_path:path}", include_in_schema=False)
+        async def serve_spa(full_path: str):
+            """SPA catch-all: serve index.html for all non-API routes."""
+            return FileResponse(str(frontend_dir / "index.html"))
 
     return app
 
