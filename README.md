@@ -43,6 +43,46 @@ docker compose up -d --build
 
 Open **http://localhost:8000** or Swagger UI at **http://localhost:8000/docs**. The same bootstrap admin is created when using in-memory user/tenant storage (default in this setup).
 
+### Running the demo locally (full pipeline: FHIR → OMOP)
+
+The demo script creates a FHIR source, mappings, and runs a pipeline that loads into an OMOP PostgreSQL database. You can run it entirely on your machine in two ways:
+
+**1. Full stack in Docker (easiest)**
+
+```bash
+docker compose up -d --build
+python scripts/demo.py
+```
+
+The API and OMOP DB run in Docker; the script talks to the API at localhost:8000. No extra flags needed.
+
+**2. API on your machine, OMOP DB in Docker (single script)**
+
+One command does it all: starts the OMOP DB, starts the API, runs the demo.
+
+```bash
+./scripts/demo-local.sh
+```
+
+The script starts `omop-db` with Docker, runs the API in the background, then runs the demo. When it finishes, the API stays running at http://localhost:8000 (you can stop it with the printed `kill` command). Requires: Docker, Python venv with deps installed (`pip install -e ".[dev]"`).
+
+**2b. Manual (three terminals)**
+
+Use this when you want to run the API and demo steps yourself:
+
+```bash
+# Terminal 1: start only the OMOP database (port 5433 on host)
+docker compose up -d omop-db
+
+# Terminal 2: run the API
+STORAGE_BACKEND=memory uvicorn src.presentation.api.app:app --host 0.0.0.0 --port 8000
+
+# Terminal 3: run the demo, pointing the pipeline at localhost:5433
+python scripts/demo.py --omop-url postgresql://omop:omop@localhost:5433/omop
+```
+
+The pipeline will connect to the OMOP DB at localhost:5433. You can also set `OMOP_CONNECTION` instead of `--omop-url`.
+
 ## Architecture
 
 Clean Architecture (hexagonal) with four layers and strict dependency inversion:

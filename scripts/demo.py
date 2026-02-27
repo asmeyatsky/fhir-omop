@@ -9,17 +9,20 @@ Demonstrates the full pipeline:
 4. Execute a pipeline: Extract FHIR → Transform via Whistle → Load to OMOP PostgreSQL
 5. Query results
 
-Usage:
+Usage — full stack in Docker (API + OMOP DB):
     docker compose up -d
     python scripts/demo.py
 
-    Or with custom API URL:
-    python scripts/demo.py --api-url http://localhost:8000
+Usage — API on your machine, OMOP DB in Docker (local dev):
+    docker compose up -d omop-db
+    # In another terminal: STORAGE_BACKEND=memory uvicorn src.presentation.api.app:app --host 0.0.0.0 --port 8000
+    python scripts/demo.py --omop-url postgresql://omop:omop@localhost:5433/omop
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 
@@ -27,7 +30,10 @@ import httpx
 
 DEFAULT_API_URL = "http://localhost:8000"
 HAPI_FHIR_URL = "https://hapi.fhir.org/baseR4"
-OMOP_CONNECTION = "postgresql://omop:omop@omop-db:5432/omop"
+# Default when API runs in Docker (same network as omop-db)
+OMOP_CONNECTION_DOCKER = "postgresql://omop:omop@omop-db:5432/omop"
+# When API runs on host, DB is at localhost:5433 (docker compose maps 5433:5432)
+OMOP_CONNECTION_LOCAL = "postgresql://omop:omop@localhost:5433/omop"
 
 
 def print_header(text: str) -> None:
@@ -57,7 +63,7 @@ def wait_for_api(base_url: str, timeout: int = 30) -> None:
     sys.exit(1)
 
 
-def run_demo(base_url: str) -> None:
+def run_demo(base_url: str, omop_connection: str) -> None:
     api = f"{base_url}/api/v1"
     client = httpx.Client(timeout=120)  # Long timeout for FHIR extraction
 
@@ -140,7 +146,7 @@ def run_demo(base_url: str) -> None:
         "name": "HAPI FHIR Demo Pipeline",
         "source_connection_id": source_id,
         "mapping_config_ids": mapping_ids,
-        "target_connection_string": OMOP_CONNECTION,
+        "target_connection_string": omop_connection,
     })
     r.raise_for_status()
     pipeline = r.json()
@@ -191,8 +197,12 @@ def run_demo(base_url: str) -> None:
         print(f"    Pipelines:   GET {api}/pipelines")
         print()
         print("  Query OMOP data directly:")
-        print("    docker compose exec omop-db psql -U omop -c 'SELECT count(*) FROM person;'")
-        print("    docker compose exec omop-db psql -U omop -c 'SELECT * FROM person LIMIT 5;'")
+        if "localhost" in omop_connection:
+            print("    psql postgresql://omop:omop@localhost:5433/omop -c 'SELECT count(*) FROM person;'")
+            print("    psql postgresql://omop:omop@localhost:5433/omop -c 'SELECT * FROM person LIMIT 5;'")
+        else:
+            print("    docker compose exec omop-db psql -U omop -c 'SELECT count(*) FROM person;'")
+            print("    docker compose exec omop-db psql -U omop -c 'SELECT * FROM person LIMIT 5;'")
     else:
         print(f"  Pipeline finished with status: {final['status']}")
         if final.get("error_message"):
@@ -202,18 +212,25 @@ def run_demo(base_url: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="FHIR-to-OMOP Demo")
     parser.add_argument("--api-url", default=DEFAULT_API_URL, help="API base URL")
+    parser.add_argument(
+        "--omop-url",
+        default=os.environ.get("OMOP_CONNECTION", OMOP_CONNECTION_DOCKER),
+        help="OMOP PostgreSQL connection string (default: omop-db:5432 for Docker; use postgresql://omop:omop@localhost:5433/omop when API runs on host)",
+    )
     parser.add_argument("--skip-wait", action="store_true", help="Skip API health check wait")
     args = parser.parse_args()
+
+    omop_connection = args.omop_url
 
     print_header("FHIR-to-OMOP Data Accelerator — Live Demo")
     print(f"  API: {args.api_url}")
     print(f"  FHIR Source: {HAPI_FHIR_URL}")
-    print(f"  OMOP Target: PostgreSQL (docker)")
+    print(f"  OMOP Target: {omop_connection}")
 
     if not args.skip_wait:
         wait_for_api(args.api_url)
 
-    run_demo(args.api_url)
+    run_demo(args.api_url, omop_connection)
 
 
 if __name__ == "__main__":
